@@ -14,15 +14,15 @@ const ARShowcase = dynamic(() => import("@/components/ar-showcase"), { ssr: fals
 const templates = [
 	{
 		id: "classic-elegant",
-		name: "Classic Elegant",
-		category: "Traditional",
+		name: "Klasik Zarafet",
+		category: "Geleneksel",
 		preview: "/placeholder.svg?height=300&width=200",
 		icon: Crown,
 		elements: [
 			{ type: "text", content: "Sarah & Michael", x: 100, y: 80, fontSize: 32, fontFamily: "serif", color: "#8B4513" },
 			{
 				type: "text",
-				content: "request the pleasure of your company",
+				content: "Sizleri aramızda görmekten mutluluk duyarız",
 				x: 100,
 				y: 120,
 				fontSize: 14,
@@ -31,21 +31,21 @@ const templates = [
 			},
 			{
 				type: "text",
-				content: "Saturday, June 15th, 2024",
+				content: "Cumartesi, 15 Haziran 2024",
 				x: 100,
 				y: 180,
 				fontSize: 16,
 				fontFamily: "serif",
 				color: "#333",
 			},
-			{ type: "text", content: "4:00 PM", x: 100, y: 200, fontSize: 16, fontFamily: "serif", color: "#333" },
-			{ type: "text", content: "The Grand Ballroom", x: 100, y: 240, fontSize: 14, fontFamily: "serif", color: "#666" },
+			{ type: "text", content: "16:00", x: 100, y: 200, fontSize: 16, fontFamily: "serif", color: "#333" },
+			{ type: "text", content: "Büyük Balo Salonu", x: 100, y: 240, fontSize: 14, fontFamily: "serif", color: "#666" },
 		],
 	},
 	{
 		id: "modern-minimal",
 		name: "Modern Minimal",
-		category: "Contemporary",
+		category: "Çağdaş",
 		preview: "/placeholder.svg?height=300&width=200",
 		icon: Sparkles,
 		elements: [
@@ -60,17 +60,17 @@ const templates = [
 			},
 			{
 				type: "text",
-				content: "ARE GETTING MARRIED",
+				content: "EVLENİYORLAR",
 				x: 100,
 				y: 130,
 				fontSize: 12,
 				fontFamily: "sans-serif",
 				color: "#7F8C8D",
 			},
-			{ type: "text", content: "08.20.2024", x: 100, y: 180, fontSize: 24, fontFamily: "sans-serif", color: "#E74C3C" },
+			{ type: "text", content: "20.08.2024", x: 100, y: 180, fontSize: 24, fontFamily: "sans-serif", color: "#E74C3C" },
 			{
 				type: "text",
-				content: "CEREMONY AT 3PM",
+				content: "TÖREN 15:00'TE",
 				x: 100,
 				y: 220,
 				fontSize: 14,
@@ -81,8 +81,8 @@ const templates = [
 	},
 	{
 		id: "floral-romance",
-		name: "Floral Romance",
-		category: "Romantic",
+		name: "Çiçekli Romantizm",
+		category: "Romantik",
 		preview: "/placeholder.svg?height=300&width=200",
 		icon: Flower,
 		elements: [
@@ -97,7 +97,7 @@ const templates = [
 			},
 			{
 				type: "text",
-				content: "Together with their families",
+				content: "Aileleriyle birlikte",
 				x: 100,
 				y: 130,
 				fontSize: 12,
@@ -106,7 +106,7 @@ const templates = [
 			},
 			{
 				type: "text",
-				content: "invite you to celebrate their union",
+				content: "Birlikteliklerini kutlamak için sizleri davet ediyorlar",
 				x: 100,
 				y: 145,
 				fontSize: 12,
@@ -115,7 +115,7 @@ const templates = [
 			},
 			{
 				type: "text",
-				content: "September 12, 2024",
+				content: "12 Eylül 2024",
 				x: 100,
 				y: 190,
 				fontSize: 18,
@@ -124,7 +124,7 @@ const templates = [
 			},
 			{
 				type: "text",
-				content: "Garden Pavilion • 5:30 PM",
+				content: "Bahçe Pavyonu • 17:30",
 				x: 100,
 				y: 220,
 				fontSize: 14,
@@ -135,7 +135,7 @@ const templates = [
 	},
 	{
 		id: "vintage-charm",
-		name: "Vintage Charm",
+		name: "Vintage Cazibe",
 		category: "Vintage",
 		preview: "/placeholder.svg?height=300&width=200",
 		icon: Heart,
@@ -149,10 +149,10 @@ const templates = [
 				fontFamily: "serif",
 				color: "#8B4513",
 			},
-			{ type: "text", content: "~ Est. 2024 ~", x: 100, y: 115, fontSize: 14, fontFamily: "serif", color: "#D2691E" },
+			{ type: "text", content: "~ Kuruluş: 2024 ~", x: 100, y: 115, fontSize: 14, fontFamily: "serif", color: "#D2691E" },
 			{
 				type: "text",
-				content: "Request your presence",
+				content: "Sizleri aramızda görmek isteriz",
 				x: 100,
 				y: 160,
 				fontSize: 14,
@@ -161,7 +161,7 @@ const templates = [
 			},
 			{
 				type: "text",
-				content: "October 5th, Two Thousand Twenty-Four",
+				content: "5 Ekim 2024, Cumartesi",
 				x: 100,
 				y: 190,
 				fontSize: 12,
@@ -170,7 +170,7 @@ const templates = [
 			},
 			{
 				type: "text",
-				content: "Historic Manor House",
+				content: "Tarihi Köşk",
 				x: 100,
 				y: 230,
 				fontSize: 14,
@@ -214,18 +214,18 @@ export default function App() {
 				<div className="container mx-auto px-4 py-8">
 					<div className="flex items-center mb-8">
 						<Button variant="ghost" onClick={handleBackToHomepage} className="mr-4">
-							← Back to Home
+							← Ana Sayfa
 						</Button>
 						<div>
-							<h1 className="text-4xl font-bold text-gray-900 mb-2">Wedding Invitation Designer</h1>
+							<h1 className="text-4xl font-bold text-gray-900 mb-2">Düğün Davetiyesi Tasarımcısı</h1>
 							<p className="text-xl text-gray-600">
-								Create beautiful, personalized wedding invitations with our professional design tools.
+								Profesyonel tasarım araçlarımızla güzel ve kişiselleştirilmiş düğün davetiyeleri oluşturun.
 							</p>
 						</div>
 					</div>
 
 					<div className="mb-8">
-						<h2 className="text-2xl font-semibold text-gray-800 mb-6">Choose Your Template</h2>
+						<h2 className="text-2xl font-semibold text-gray-800 mb-6">Şablonunuzu Seçin</h2>
 						<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
 							{templates.map((template) => {
 								const IconComponent = template.icon
@@ -255,7 +255,7 @@ export default function App() {
 												onClick={() => handleTemplateSelect(template)}
 												className="w-full group-hover:bg-rose-600 transition-colors"
 											>
-												Customize This Design
+												Bu Tasarımı Özelleştir
 											</Button>
 										</CardContent>
 									</Card>
@@ -266,10 +266,10 @@ export default function App() {
 
 					<div className="text-center">
 						<Button variant="outline" size="lg" className="mr-4 bg-transparent">
-							Upload Your Own Design
+							Kendi Tasarımını Yükle
 						</Button>
 						<Button variant="outline" size="lg">
-							Start from Blank
+							Boş Sayfadan Başla
 						</Button>
 					</div>
 				</div>
@@ -281,9 +281,9 @@ export default function App() {
 		<div>
 			<Homepage onNavigateToEditor={handleNavigateToTemplates} />
 			<section className="my-16">
-				<h2 className="text-3xl font-bold text-center mb-4">Try Our AR Invitation Showcase</h2>
+				<h2 className="text-3xl font-bold text-center mb-4">AR Davetiye Deneyimini Keşfet</h2>
 				<p className="text-center text-gray-600 mb-8">
-					Experience your invitation in Augmented Reality, powered by Three.js!
+					Davetiyenizi Three.js destekli Artırılmış Gerçeklik ile deneyimleyin!
 				</p>
 				<div className="flex justify-center">
 					<div className="w-full max-w-2xl h-[400px] bg-gray-100 rounded-lg shadow-lg flex items-center justify-center">

@@ -36,82 +36,85 @@ interface HomepageProps {
 export default function Homepage({ onNavigateToEditor }: HomepageProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
 
+  // HİZMETLERİ TÜRKÇELEŞTİR
   const services = [
     {
-      title: "Wedding Invitations",
-      description: "Exquisite, bespoke wedding invitations crafted to perfection",
+      title: "Düğün Davetiyeleri",
+      description: "Mükemmel, kişiye özel düğün davetiyeleri",
       icon: Heart,
-      features: ["Custom Calligraphy", "Premium Paper Stock", "Gold Foil Options"],
-      price: "Starting at $4.99 each",
+      features: ["Özel Kaligrafi", "Premium Kağıt", "Altın Varak Seçenekleri"],
+      price: "Adet 4,99₺'den başlayan fiyatlarla",
       color: "rose",
     },
     {
-      title: "Save the Dates",
-      description: "Elegant announcements to mark your special day",
+      title: "Save the Date Kartları",
+      description: "Özel gününüzü duyurmak için zarif kartlar",
       icon: Crown,
-      features: ["Matching Designs", "Digital Options", "Express Delivery"],
-      price: "Starting at $2.99 each",
+      features: ["Uyumlu Tasarımlar", "Dijital Seçenekler", "Hızlı Teslimat"],
+      price: "Adet 2,99₺'den başlayan fiyatlarla",
       color: "purple",
     },
     {
-      title: "Event Stationery",
-      description: "Complete stationery suites for memorable occasions",
+      title: "Etkinlik Kırtasiyesi",
+      description: "Unutulmaz anlar için tam kırtasiye setleri",
       icon: Sparkles,
-      features: ["Menu Cards", "Place Cards", "Thank You Notes"],
-      price: "Starting at $1.99 each",
+      features: ["Menü Kartları", "Yer Kartları", "Teşekkür Kartları"],
+      price: "Adet 1,99₺'den başlayan fiyatlarla",
       color: "amber",
     },
     {
-      title: "Custom Design",
-      description: "Bespoke designs tailored to your unique vision",
+      title: "Özel Tasarım",
+      description: "Hayalinizdeki tasarımlar size özel hazırlanır",
       icon: Palette,
-      features: ["Personal Consultation", "Unlimited Revisions", "Luxury Finishes"],
-      price: "Starting at $299",
+      features: ["Kişisel Danışmanlık", "Sınırsız Revizyon", "Lüks Detaylar"],
+      price: "299₺'den başlayan fiyatlarla",
       color: "emerald",
     },
   ]
 
+  // ÖZELLİKLERİ TÜRKÇELEŞTİR
   const features = [
     {
       icon: Edit3,
-      title: "Elegant Design Studio",
-      description: "Professional design tools with luxury templates and typography",
+      title: "Zarif Tasarım Stüdyosu",
+      description: "Lüks şablonlar ve tipografiyle profesyonel tasarım araçları",
     },
     {
       icon: Crown,
-      title: "Premium Materials",
-      description: "Finest paper stocks, foils, and finishing options available",
+      title: "Premium Malzemeler",
+      description: "En kaliteli kağıtlar, varaklar ve özel bitişler",
     },
     {
       icon: Gift,
-      title: "White Glove Service",
-      description: "Personal design consultation and dedicated customer care",
+      title: "Özel Hizmet",
+      description: "Kişisel tasarım danışmanlığı ve müşteri desteği",
     },
     {
       icon: Award,
-      title: "Award-Winning Quality",
-      description: "Recognized excellence in wedding stationery design",
+      title: "Ödüllü Kalite",
+      description: "Düğün kırtasiyesinde ödüllü tasarımlar",
     },
   ]
 
+  // REFERANSLARI TÜRKÇELEŞTİR
   const testimonials = [
     {
-      name: "Isabella & James",
-      text: "Absolutely stunning invitations! The attention to detail and quality exceeded our expectations. Our guests are still talking about them.",
+      name: "İsabella & James",
+      text: "Davetiyelerimiz harikaydı! Detaylara verilen önem ve kalite beklentimizin çok üzerindeydi. Misafirlerimiz hâlâ konuşuyor.",
       rating: 5,
-      location: "Beverly Hills, CA",
+      location: "İstanbul",
     },
     {
-      name: "Sophia & Alexander",
-      text: "The design process was seamless and the final product was pure perfection. Bella Color truly understands luxury stationery.",
+      name: "Sofia & Alexander",
+      text: "Tasarım süreci çok kolaydı ve sonuç mükemmeldi. Bella Color lüks kırtasiye işini gerçekten biliyor.",
       rating: 5,
-      location: "Manhattan, NY",
+      location: "Ankara",
     },
     {
       name: "Charlotte & William",
-      text: "From concept to delivery, everything was flawless. The gold foil details were absolutely breathtaking.",
+      text: "Başlangıçtan teslimata kadar her şey kusursuzdu. Altın varak detaylar nefes kesiciydi.",
       rating: 5,
-      location: "London, UK",
+      location: "İzmir",
     },
   ]
 
@@ -126,17 +129,17 @@ export default function Homepage({ onNavigateToEditor }: HomepageProps) {
                 <img src="/images/bella-color-logo.jpeg" alt="Bella Color" className="h-12 w-auto" />
                 <div className="flex flex-col">
                   <span className="text-2xl font-serif text-gray-900 tracking-wide">Bella Color</span>
-                  <span className="text-xs text-gray-500 tracking-widest uppercase">Luxury Stationery</span>
+                  <span className="text-xs text-gray-500 tracking-widest uppercase">Lüks Davetiye</span>
                 </div>
               </div>
               <div className="hidden md:flex items-center space-x-8">
                 <a href="#services" className="text-gray-700 hover:text-rose-600 transition-colors font-medium">
-                  Collections
+                  Koleksiyonlar
                 </a>
                 <DropdownMenu open={isMenuOpen} onOpenChange={setIsMenuOpen}>
                   <DropdownMenuTrigger asChild>
                     <Button variant="ghost" className="text-gray-700 hover:text-rose-600 transition-colors font-medium">
-                      Design Studio
+                      Tasarım Stüdyosu
                       <ChevronDown className="ml-1 h-4 w-4" />
                     </Button>
                   </DropdownMenuTrigger>
@@ -144,41 +147,41 @@ export default function Homepage({ onNavigateToEditor }: HomepageProps) {
                     <DropdownMenuItem onClick={onNavigateToEditor} className="cursor-pointer p-4">
                       <Heart className="mr-3 h-5 w-5 text-rose-500" />
                       <div>
-                        <div className="font-semibold text-gray-900">Wedding Invitations</div>
-                        <div className="text-sm text-gray-500">Create your perfect invitation</div>
+                        <div className="font-semibold text-gray-900">Düğün Davetiyeleri</div>
+                        <div className="text-sm text-gray-500">Kusursuz davetiyeni oluştur</div>
                       </div>
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem className="cursor-pointer p-4">
                       <Crown className="mr-3 h-5 w-5 text-purple-500" />
                       <div>
-                        <div className="font-semibold text-gray-900">Save the Dates</div>
-                        <div className="text-sm text-gray-500">Elegant announcements</div>
+                        <div className="font-semibold text-gray-900">Save the Date Kartları</div>
+                        <div className="text-sm text-gray-500">Şık duyurular</div>
                       </div>
                     </DropdownMenuItem>
                     <DropdownMenuItem className="cursor-pointer p-4">
                       <Sparkles className="mr-3 h-5 w-5 text-amber-500" />
                       <div>
-                        <div className="font-semibold text-gray-900">Event Stationery</div>
-                        <div className="text-sm text-gray-500">Complete suites</div>
+                        <div className="font-semibold text-gray-900">Etkinlik Kırtasiyesi</div>
+                        <div className="text-sm text-gray-500">Tüm setler</div>
                       </div>
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
                 <a href="#about" className="text-gray-700 hover:text-rose-600 transition-colors font-medium">
-                  About
+                  Hakkında
                 </a>
                 <a href="#contact" className="text-gray-700 hover:text-rose-600 transition-colors font-medium">
-                  Contact
+                  İletişim
                 </a>
               </div>
             </div>
             <div className="flex items-center space-x-4">
               <Button variant="ghost" className="font-medium">
-                Portfolio
+                Portföy
               </Button>
               <Button onClick={onNavigateToEditor} className="bg-rose-600 hover:bg-rose-700 font-medium">
-                Start Designing
+                Tasarıma Başla
               </Button>
             </div>
           </div>
@@ -199,13 +202,12 @@ export default function Homepage({ onNavigateToEditor }: HomepageProps) {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
             <div className="text-center lg:text-left">
               <h1 className="text-6xl lg:text-7xl font-serif text-gray-900 mb-6 leading-tight">
-                Exquisite
-                <span className="block text-rose-600 italic">Wedding</span>
-                <span className="block">Stationery</span>
+                Zarif
+                <span className="block text-rose-600 italic">Düğün</span>
+                <span className="block">Kırtasiyesi</span>
               </h1>
               <p className="text-xl text-gray-600 mb-8 leading-relaxed max-w-lg">
-                Create breathtaking wedding invitations with our luxury design studio. Every detail crafted to
-                perfection for your most important day.
+                Lüks tasarım stüdyomuz ile göz alıcı düğün davetiyeleri oluşturun. En önemli gününüz için her detay özenle tasarlandı.
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
                 <Button
@@ -213,25 +215,25 @@ export default function Homepage({ onNavigateToEditor }: HomepageProps) {
                   onClick={onNavigateToEditor}
                   className="bg-rose-600 hover:bg-rose-700 text-lg px-8 py-4 font-medium"
                 >
-                  Begin Your Design
+                  Tasarıma Başla
                   <ArrowRight className="ml-2 h-5 w-5" />
                 </Button>
                 <Button size="lg" variant="outline" className="text-lg px-8 py-4 font-medium border-2 bg-transparent">
-                  View Portfolio
+                  Portföyü Gör
                 </Button>
               </div>
               <div className="flex items-center justify-center lg:justify-start mt-12 space-x-8">
                 <div className="text-center">
-                  <div className="text-3xl font-bold text-gray-900">10K+</div>
-                  <div className="text-sm text-gray-600 uppercase tracking-wide">Happy Couples</div>
+                  <div className="text-3xl font-bold text-gray-900">10B+</div>
+                  <div className="text-sm text-gray-600 uppercase tracking-wide">Mutlu Çift</div>
                 </div>
                 <div className="text-center">
                   <div className="text-3xl font-bold text-gray-900">50+</div>
-                  <div className="text-sm text-gray-600 uppercase tracking-wide">Design Awards</div>
+                  <div className="text-sm text-gray-600 uppercase tracking-wide">Tasarım Ödülü</div>
                 </div>
                 <div className="text-center">
                   <div className="text-3xl font-bold text-gray-900">15</div>
-                  <div className="text-sm text-gray-600 uppercase tracking-wide">Years Experience</div>
+                  <div className="text-sm text-gray-600 uppercase tracking-wide">Yıllık Deneyim</div>
                 </div>
               </div>
             </div>
@@ -239,14 +241,14 @@ export default function Homepage({ onNavigateToEditor }: HomepageProps) {
               <div className="relative bg-white rounded-2xl shadow-2xl p-8 transform rotate-3 hover:rotate-0 transition-transform duration-500">
                 <img
                   src="/placeholder.svg?height=500&width=350"
-                  alt="Luxury wedding invitation sample"
+                  alt="Lüks düğün davetiyesi örneği"
                   className="w-full h-auto rounded-lg"
                 />
                 <div className="absolute -top-6 -right-6 bg-rose-600 text-white px-4 py-2 rounded-full text-sm font-semibold shadow-lg">
-                  New Collection
+                  Yeni Koleksiyon
                 </div>
                 <div className="absolute -bottom-4 -left-4 bg-white px-4 py-2 rounded-full text-sm font-medium shadow-lg border">
-                  Premium Foil
+                  Premium Varak
                 </div>
               </div>
             </div>
@@ -258,10 +260,10 @@ export default function Homepage({ onNavigateToEditor }: HomepageProps) {
       <section className="py-24 bg-white">
         <div className="container mx-auto px-4">
           <div className="text-center mb-20">
-            <h2 className="text-5xl font-serif text-gray-900 mb-6">The Bella Color Difference</h2>
+            {/* ÖZELLİKLER BÖLÜMÜ BAŞLIKLARI */}
+            <h2 className="text-5xl font-serif text-gray-900 mb-6">Bella Color Farkı</h2>
             <p className="text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
-              We combine traditional craftsmanship with modern design technology to create stationery that tells your
-              unique love story
+              Geleneksel el işçiliğini modern tasarım teknolojisiyle birleştiriyoruz. Hikayenizi anlatan kırtasiye ürünleri tasarlıyoruz.
             </p>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
@@ -282,9 +284,10 @@ export default function Homepage({ onNavigateToEditor }: HomepageProps) {
       <section id="services" className="py-24 bg-gray-50">
         <div className="container mx-auto px-4">
           <div className="text-center mb-20">
-            <h2 className="text-5xl font-serif text-gray-900 mb-6">Our Collections</h2>
+            {/* KOLEKSİYONLAR BÖLÜMÜ BAŞLIKLARI */}
+            <h2 className="text-5xl font-serif text-gray-900 mb-6">Koleksiyonlarımız</h2>
             <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-              Discover our curated selection of luxury stationery designed for life's most precious moments
+              Hayatınızın en özel anları için özenle seçilmiş lüks kırtasiye koleksiyonlarımızı keşfedin.
             </p>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
@@ -318,7 +321,7 @@ export default function Homepage({ onNavigateToEditor }: HomepageProps) {
                     className="w-full bg-transparent border-2 hover:bg-gray-900 hover:text-white transition-colors"
                     variant="outline"
                   >
-                    Explore Collection
+                    Koleksiyonu İncele
                   </Button>
                 </CardContent>
               </Card>
@@ -331,9 +334,10 @@ export default function Homepage({ onNavigateToEditor }: HomepageProps) {
       <section className="py-24 bg-white">
         <div className="container mx-auto px-4">
           <div className="text-center mb-20">
-            <h2 className="text-5xl font-serif text-gray-900 mb-6">Love Stories</h2>
+            {/* REFERANSLAR BÖLÜMÜ BAŞLIKLARI */}
+            <h2 className="text-5xl font-serif text-gray-900 mb-6">Aşk Hikayeleri</h2>
             <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-              Hear from couples who trusted us with their most important announcements
+              En özel anlarını bize emanet eden çiftlerimizin yorumları
             </p>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -364,9 +368,10 @@ export default function Homepage({ onNavigateToEditor }: HomepageProps) {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-16">
             <div>
               <img src="/images/bella-color-white-logo.png" alt="Bella Color" className="h-16 w-auto mb-8" />
-              <h2 className="text-5xl font-serif mb-8">Let's Create Something Beautiful</h2>
+              {/* İLETİŞİM BÖLÜMÜ BAŞLIKLARI */}
+              <h2 className="text-5xl font-serif mb-8">Birlikte Güzellikler Yaratmaya Hazır mısınız?</h2>
               <p className="text-xl text-gray-300 mb-10 leading-relaxed">
-                Ready to begin your stationery journey? Our design consultants are here to bring your vision to life.
+                Kırtasiye yolculuğunuza başlamak ister misiniz? Tasarım danışmanlarımız hayallerinizi gerçeğe dönüştürmek için burada.
               </p>
               <div className="space-y-6">
                 <div className="flex items-center">
@@ -388,51 +393,55 @@ export default function Homepage({ onNavigateToEditor }: HomepageProps) {
               </div>
             </div>
             <div className="bg-white/10 backdrop-blur-sm p-10 rounded-2xl border border-white/20">
-              <h3 className="text-3xl font-serif mb-8">Schedule Consultation</h3>
+              {/* DANISMANLIK FORMU */}
+              <h3 className="text-3xl font-serif mb-8">Danışmanlık Randevusu Alın</h3>
               <form className="space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium mb-2">First Name</label>
+                    <label className="block text-sm font-medium mb-2">Adınız</label>
                     <input
                       type="text"
                       className="w-full px-4 py-3 bg-white/10 border border-white/30 rounded-lg focus:outline-none focus:border-rose-400 text-white placeholder-gray-300"
-                      placeholder="Your first name"
+                      placeholder="Adınız"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium mb-2">Last Name</label>
+                    <label className="block text-sm font-medium mb-2">Soyadınız</label>
                     <input
                       type="text"
                       className="w-full px-4 py-3 bg-white/10 border border-white/30 rounded-lg focus:outline-none focus:border-rose-400 text-white placeholder-gray-300"
-                      placeholder="Your last name"
+                      placeholder="Soyadınız"
                     />
                   </div>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium mb-2">Email</label>
+                  <label className="block text-sm font-medium mb-2">E-posta</label>
                   <input
                     type="email"
                     className="w-full px-4 py-3 bg-white/10 border border-white/30 rounded-lg focus:outline-none focus:border-rose-400 text-white placeholder-gray-300"
-                    placeholder="your@email.com"
+                    placeholder="eposta@adresiniz.com"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium mb-2">Wedding Date</label>
+                  <label className="block text-sm font-medium mb-2">Düğün Tarihi</label>
                   <input
                     type="date"
                     className="w-full px-4 py-3 bg-white/10 border border-white/30 rounded-lg focus:outline-none focus:border-rose-400 text-white"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium mb-2">Tell us about your vision</label>
+                  <label className="block text-sm font-medium mb-2">Hayalinizdeki tasarımı anlatın</label>
                   <textarea
                     rows={4}
                     className="w-full px-4 py-3 bg-white/10 border border-white/30 rounded-lg focus:outline-none focus:border-rose-400 text-white placeholder-gray-300"
-                    placeholder="Describe your dream stationery..."
-                  ></textarea>
+                    placeholder="Hayalinizdeki kırtasiyeyi anlatın..."
+                  />
                 </div>
-                <Button className="w-full bg-rose-600 hover:bg-rose-700 text-lg py-4 font-medium">
-                  Schedule Consultation
+                <Button
+                  type="submit"
+                  className="w-full bg-rose-600 hover:bg-rose-700 transition-colors font-medium"
+                >
+                  Randevu Al
                 </Button>
               </form>
             </div>
@@ -441,81 +450,11 @@ export default function Homepage({ onNavigateToEditor }: HomepageProps) {
       </section>
 
       {/* Footer */}
-      <footer className="bg-black text-white py-16">
-        <div className="container mx-auto px-4">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-12">
-            <div className="md:col-span-2">
-              <img src="/images/bella-color-white-logo.png" alt="Bella Color" className="h-12 w-auto mb-6" />
-              <p className="text-gray-400 leading-relaxed mb-6 max-w-md">
-                Luxury wedding stationery crafted with passion and precision. Creating beautiful beginnings for your
-                love story since 2009.
-              </p>
-              <div className="flex space-x-4">
-                <div className="w-10 h-10 bg-gray-800 rounded-full flex items-center justify-center hover:bg-rose-600 transition-colors cursor-pointer">
-                  <span className="text-sm font-bold">f</span>
-                </div>
-                <div className="w-10 h-10 bg-gray-800 rounded-full flex items-center justify-center hover:bg-rose-600 transition-colors cursor-pointer">
-                  <span className="text-sm font-bold">@</span>
-                </div>
-                <div className="w-10 h-10 bg-gray-800 rounded-full flex items-center justify-center hover:bg-rose-600 transition-colors cursor-pointer">
-                  <span className="text-sm font-bold">in</span>
-                </div>
-              </div>
-            </div>
-            <div>
-              <h4 className="text-lg font-semibold mb-6">Collections</h4>
-              <ul className="space-y-3 text-gray-400">
-                <li>
-                  <a href="#" className="hover:text-white transition-colors">
-                    Wedding Invitations
-                  </a>
-                </li>
-                <li>
-                  <a href="#" className="hover:text-white transition-colors">
-                    Save the Dates
-                  </a>
-                </li>
-                <li>
-                  <a href="#" className="hover:text-white transition-colors">
-                    Event Stationery
-                  </a>
-                </li>
-                <li>
-                  <a href="#" className="hover:text-white transition-colors">
-                    Custom Design
-                  </a>
-                </li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="text-lg font-semibold mb-6">Company</h4>
-              <ul className="space-y-3 text-gray-400">
-                <li>
-                  <a href="#" className="hover:text-white transition-colors">
-                    About Us
-                  </a>
-                </li>
-                <li>
-                  <a href="#" className="hover:text-white transition-colors">
-                    Portfolio
-                  </a>
-                </li>
-                <li>
-                  <a href="#" className="hover:text-white transition-colors">
-                    Process
-                  </a>
-                </li>
-                <li>
-                  <a href="#" className="hover:text-white transition-colors">
-                    Contact
-                  </a>
-                </li>
-              </ul>
-            </div>
-          </div>
-          <div className="border-t border-gray-800 mt-12 pt-8 text-center text-gray-400">
-            <p>&copy; 2024 Bella Color. All rights reserved. | Luxury Wedding Stationery</p>
-          </div>
+      <footer className="py-12 bg-gray-900 text-white">
+        <div className="container mx-auto px-4 text-center">
+          <p className="text-sm text-gray-400">
+            &copy; 2024 Bella Color. Tüm hakları saklıdır. | Lüks Düğün Kırtasiyesi
+          </p>
         </div>
       </footer>
     </div>
