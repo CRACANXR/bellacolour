@@ -28,6 +28,7 @@ import {
   Palette,
   Gift,
 } from "lucide-react"
+import Link from "next/link" // Import Link for navigation
 
 interface HomepageProps {
   onNavigateToEditor: () => void
@@ -36,7 +37,6 @@ interface HomepageProps {
 export default function Homepage({ onNavigateToEditor }: HomepageProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
 
-  // HİZMETLERİ TÜRKÇELEŞTİR
   const services = [
     {
       title: "Düğün Davetiyeleri",
@@ -45,6 +45,7 @@ export default function Homepage({ onNavigateToEditor }: HomepageProps) {
       features: ["Özel Kaligrafi", "Premium Kağıt", "Altın Varak Seçenekleri"],
       price: "Adet 4,99₺'den başlayan fiyatlarla",
       color: "rose",
+      link: "/templates", // Assuming this navigates to templates for editor
     },
     {
       title: "Save the Date Kartları",
@@ -53,6 +54,7 @@ export default function Homepage({ onNavigateToEditor }: HomepageProps) {
       features: ["Uyumlu Tasarımlar", "Dijital Seçenekler", "Hızlı Teslimat"],
       price: "Adet 2,99₺'den başlayan fiyatlarla",
       color: "purple",
+      link: "/save-the-date", // Changed to point to the new creator page
     },
     {
       title: "Etkinlik Kırtasiyesi",
@@ -61,6 +63,7 @@ export default function Homepage({ onNavigateToEditor }: HomepageProps) {
       features: ["Menü Kartları", "Yer Kartları", "Teşekkür Kartları"],
       price: "Adet 1,99₺'den başlayan fiyatlarla",
       color: "amber",
+      link: "/templates", // Assuming this navigates to templates
     },
     {
       title: "Özel Tasarım",
@@ -69,10 +72,10 @@ export default function Homepage({ onNavigateToEditor }: HomepageProps) {
       features: ["Kişisel Danışmanlık", "Sınırsız Revizyon", "Lüks Detaylar"],
       price: "299₺'den başlayan fiyatlarla",
       color: "emerald",
+      link: "/templates", // Assuming this navigates to templates
     },
   ]
 
-  // ÖZELLİKLERİ TÜRKÇELEŞTİR
   const features = [
     {
       icon: Edit3,
@@ -96,7 +99,6 @@ export default function Homepage({ onNavigateToEditor }: HomepageProps) {
     },
   ]
 
-  // REFERANSLARI TÜRKÇELEŞTİR
   const testimonials = [
     {
       name: "İsabella & James",
@@ -152,13 +154,17 @@ export default function Homepage({ onNavigateToEditor }: HomepageProps) {
                       </div>
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
-                    <DropdownMenuItem className="cursor-pointer p-4">
-                      <Crown className="mr-3 h-5 w-5 text-purple-500" />
-                      <div>
-                        <div className="font-semibold text-gray-900">Save the Date Kartları</div>
-                        <div className="text-sm text-gray-500">Şık duyurular</div>
-                      </div>
-                    </DropdownMenuItem>
+                    <Link href="/save-the-date" passHref>
+                      <DropdownMenuItem asChild className="cursor-pointer p-4">
+                        <a>
+                          <Crown className="mr-3 h-5 w-5 text-purple-500" />
+                          <div>
+                            <div className="font-semibold text-gray-900">Save the Date Kartları</div>
+                            <div className="text-sm text-gray-500">Şık duyurular</div>
+                          </div>
+                        </a>
+                      </DropdownMenuItem>
+                    </Link>
                     <DropdownMenuItem className="cursor-pointer p-4">
                       <Sparkles className="mr-3 h-5 w-5 text-amber-500" />
                       <div>
@@ -207,7 +213,8 @@ export default function Homepage({ onNavigateToEditor }: HomepageProps) {
                 <span className="block">Kırtasiyesi</span>
               </h1>
               <p className="text-xl text-gray-600 mb-8 leading-relaxed max-w-lg">
-                Lüks tasarım stüdyomuz ile göz alıcı düğün davetiyeleri oluşturun. En önemli gününüz için her detay özenle tasarlandı.
+                Lüks tasarım stüdyomuz ile göz alıcı düğün davetiyeleri oluşturun. En önemli gününüz için her detay
+                özenle tasarlandı.
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
                 <Button
@@ -260,10 +267,10 @@ export default function Homepage({ onNavigateToEditor }: HomepageProps) {
       <section className="py-24 bg-white">
         <div className="container mx-auto px-4">
           <div className="text-center mb-20">
-            {/* ÖZELLİKLER BÖLÜMÜ BAŞLIKLARI */}
             <h2 className="text-5xl font-serif text-gray-900 mb-6">Bella Color Farkı</h2>
             <p className="text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
-              Geleneksel el işçiliğini modern tasarım teknolojisiyle birleştiriyoruz. Hikayenizi anlatan kırtasiye ürünleri tasarlıyoruz.
+              Geleneksel el işçiliğini modern tasarım teknolojisiyle birleştiriyoruz. Hikayenizi anlatan kırtasiye
+              ürünleri tasarlıyoruz.
             </p>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
@@ -284,7 +291,6 @@ export default function Homepage({ onNavigateToEditor }: HomepageProps) {
       <section id="services" className="py-24 bg-gray-50">
         <div className="container mx-auto px-4">
           <div className="text-center mb-20">
-            {/* KOLEKSİYONLAR BÖLÜMÜ BAŞLIKLARI */}
             <h2 className="text-5xl font-serif text-gray-900 mb-6">Koleksiyonlarımız</h2>
             <p className="text-xl text-gray-600 max-w-2xl mx-auto">
               Hayatınızın en özel anları için özenle seçilmiş lüks kırtasiye koleksiyonlarımızı keşfedin.
@@ -317,12 +323,16 @@ export default function Homepage({ onNavigateToEditor }: HomepageProps) {
                       </li>
                     ))}
                   </ul>
-                  <Button
-                    className="w-full bg-transparent border-2 hover:bg-gray-900 hover:text-white transition-colors"
-                    variant="outline"
-                  >
-                    Koleksiyonu İncele
-                  </Button>
+                  {/* Use Link component for navigation */}
+                  <Link href={service.link} passHref>
+                    <Button
+                      className="w-full bg-transparent border-2 hover:bg-gray-900 hover:text-white transition-colors"
+                      variant="outline"
+                      asChild // Render as a child of Button to apply Button styles
+                    >
+                      <a>{service.title === "Save the Date Kartları" ? "Aracı Kullan" : "Koleksiyonu İncele"}</a>
+                    </Button>
+                  </Link>
                 </CardContent>
               </Card>
             ))}
@@ -334,7 +344,6 @@ export default function Homepage({ onNavigateToEditor }: HomepageProps) {
       <section className="py-24 bg-white">
         <div className="container mx-auto px-4">
           <div className="text-center mb-20">
-            {/* REFERANSLAR BÖLÜMÜ BAŞLIKLARI */}
             <h2 className="text-5xl font-serif text-gray-900 mb-6">Aşk Hikayeleri</h2>
             <p className="text-xl text-gray-600 max-w-2xl mx-auto">
               En özel anlarını bize emanet eden çiftlerimizin yorumları
@@ -368,10 +377,10 @@ export default function Homepage({ onNavigateToEditor }: HomepageProps) {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-16">
             <div>
               <img src="/images/bella-color-white-logo.png" alt="Bella Color" className="h-16 w-auto mb-8" />
-              {/* İLETİŞİM BÖLÜMÜ BAŞLIKLARI */}
               <h2 className="text-5xl font-serif mb-8">Birlikte Güzellikler Yaratmaya Hazır mısınız?</h2>
               <p className="text-xl text-gray-300 mb-10 leading-relaxed">
-                Kırtasiye yolculuğunuza başlamak ister misiniz? Tasarım danışmanlarımız hayallerinizi gerçeğe dönüştürmek için burada.
+                Kırtasiye yolculuğunuza başlamak ister misiniz? Tasarım danışmanlarımız hayallerinizi gerçeğe
+                dönüştürmek için burada.
               </p>
               <div className="space-y-6">
                 <div className="flex items-center">
@@ -393,7 +402,6 @@ export default function Homepage({ onNavigateToEditor }: HomepageProps) {
               </div>
             </div>
             <div className="bg-white/10 backdrop-blur-sm p-10 rounded-2xl border border-white/20">
-              {/* DANISMANLIK FORMU */}
               <h3 className="text-3xl font-serif mb-8">Danışmanlık Randevusu Alın</h3>
               <form className="space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -437,10 +445,7 @@ export default function Homepage({ onNavigateToEditor }: HomepageProps) {
                     placeholder="Hayalinizdeki kırtasiyeyi anlatın..."
                   />
                 </div>
-                <Button
-                  type="submit"
-                  className="w-full bg-rose-600 hover:bg-rose-700 transition-colors font-medium"
-                >
+                <Button type="submit" className="w-full bg-rose-600 hover:bg-rose-700 transition-colors font-medium">
                   Randevu Al
                 </Button>
               </form>
