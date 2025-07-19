@@ -28,7 +28,9 @@ import {
   Palette,
   Gift,
 } from "lucide-react"
-import Link from "next/link" // Import Link for navigation
+import Link from "next/link"
+import { UserMenu } from "@/components/auth/user-menu"
+import { useAuth } from "@/contexts/auth-context"
 
 interface HomepageProps {
   onNavigateToEditor: () => void
@@ -36,6 +38,7 @@ interface HomepageProps {
 
 export default function Homepage({ onNavigateToEditor }: HomepageProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
+  const { user, isAuthenticated } = useAuth()
 
   const services = [
     {
@@ -45,7 +48,7 @@ export default function Homepage({ onNavigateToEditor }: HomepageProps) {
       features: ["Özel Kaligrafi", "Premium Kağıt", "Altın Varak Seçenekleri"],
       price: "Adet 4,99₺'den başlayan fiyatlarla",
       color: "rose",
-      link: "/templates", // Assuming this navigates to templates for editor
+      link: "/templates",
     },
     {
       title: "Save the Date Kartları",
@@ -54,7 +57,7 @@ export default function Homepage({ onNavigateToEditor }: HomepageProps) {
       features: ["Uyumlu Tasarımlar", "Dijital Seçenekler", "Hızlı Teslimat"],
       price: "Adet 2,99₺'den başlayan fiyatlarla",
       color: "purple",
-      link: "/save-the-date", // Changed to point to the new creator page
+      link: "/save-the-date",
     },
     {
       title: "Etkinlik Kırtasiyesi",
@@ -63,7 +66,7 @@ export default function Homepage({ onNavigateToEditor }: HomepageProps) {
       features: ["Menü Kartları", "Yer Kartları", "Teşekkür Kartları"],
       price: "Adet 1,99₺'den başlayan fiyatlarla",
       color: "amber",
-      link: "/templates", // Assuming this navigates to templates
+      link: "/templates",
     },
     {
       title: "Özel Tasarım",
@@ -72,7 +75,7 @@ export default function Homepage({ onNavigateToEditor }: HomepageProps) {
       features: ["Kişisel Danışmanlık", "Sınırsız Revizyon", "Lüks Detaylar"],
       price: "299₺'den başlayan fiyatlarla",
       color: "emerald",
-      link: "/templates", // Assuming this navigates to templates
+      link: "/templates",
     },
   ]
 
@@ -183,12 +186,16 @@ export default function Homepage({ onNavigateToEditor }: HomepageProps) {
               </div>
             </div>
             <div className="flex items-center space-x-4">
+              {isAuthenticated && (
+                <span className="text-sm text-gray-600 hidden sm:block">Hoş geldin, {user?.name?.split(" ")[0]}!</span>
+              )}
               <Button variant="ghost" className="font-medium">
                 Portföy
               </Button>
               <Button onClick={onNavigateToEditor} className="bg-rose-600 hover:bg-rose-700 font-medium">
                 Tasarıma Başla
               </Button>
+              <UserMenu />
             </div>
           </div>
         </div>
@@ -196,7 +203,6 @@ export default function Homepage({ onNavigateToEditor }: HomepageProps) {
 
       {/* Hero Section */}
       <section className="relative bg-gradient-to-br from-rose-50 via-white to-purple-50 py-24 overflow-hidden">
-        {/* Decorative background pattern */}
         <div
           className="absolute inset-0 opacity-40"
           style={{
@@ -323,12 +329,11 @@ export default function Homepage({ onNavigateToEditor }: HomepageProps) {
                       </li>
                     ))}
                   </ul>
-                  {/* Use Link component for navigation */}
                   <Link href={service.link} passHref>
                     <Button
                       className="w-full bg-transparent border-2 hover:bg-gray-900 hover:text-white transition-colors"
                       variant="outline"
-                      asChild // Render as a child of Button to apply Button styles
+                      asChild
                     >
                       <a>{service.title === "Save the Date Kartları" ? "Aracı Kullan" : "Koleksiyonu İncele"}</a>
                     </Button>
