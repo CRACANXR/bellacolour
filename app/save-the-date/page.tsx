@@ -1,18 +1,17 @@
 "use client"
 
-import type React from "react"
-
 import SaveTheDateNotificator from "@/components/save-the-date-notificator"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { ArrowLeft, Copy } from "lucide-react"
+import { ArrowLeft, Copy, Loader2 } from "lucide-react"
 import { useRouter } from "next/navigation"
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { useToast } from "@/hooks/use-toast"
 import { ProtectedRoute } from "@/components/auth/protected-route"
 import { useAuth } from "@/contexts/auth-context"
+import { createSaveTheDate, trackEvent } from "@/lib/api-service"
 
 export default function SaveTheDateCreatorPage() {
   const router = useRouter()
@@ -21,31 +20,56 @@ export default function SaveTheDateCreatorPage() {
   const [partner1Name, setPartner1Name] = useState<string>("")
   const [partner2Name, setPartner2Name] = useState<string>("")
   const [shareableLink, setShareableLink] = useState<string>("")
+  const [isCreating, setIsCreating] = useState(false)
   const { toast } = useToast()
 
-  useEffect(() => {
-    if (selectedDate) {
-      const origin = typeof window !== "undefined" ? window.location.origin : ""
-      const params = new URLSearchParams()
-      params.append("date", selectedDate)
-      if (partner1Name) params.append("partner1", partner1Name)
-      if (partner2Name) params.append("partner2", partner2Name)
-      setShareableLink(`${origin}/save-the-date/countdown?${params.toString()}`)
-    } else {
-      setShareableLink("")
+  const handleCreateLink = async () => {
+    if (!selectedDate) {
+      toast({
+        title: "Hata",
+        description: "Lütfen düğün tarihini seçin.",
+        variant: "destructive",
+      })
+      return
     }
-  }, [selectedDate, partner1Name, partner2Name])
 
-  const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSelectedDate(e.target.value)
-  }
+    setIsCreating(true)
 
-  const handlePartner1NameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setPartner1Name(e.target.value)
-  }
+    try {
+      const response = await createSaveTheDate({
+        partner1Name: partner1Name || undefined,
+        partner2Name: partner2Name || undefined,
+        weddingDate: selectedDate,
+        createdBy: user?.id,
+      })
 
-  const handlePartner2NameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setPartner2Name(e.target.value)
+      setShareableLink(response.shareableUrl)
+
+      // Track event
+      await trackEvent({
+        event: "save_the_date_created",
+        userId: user?.id,
+        data: {
+          hasPartner1: !!partner1Name,
+          hasPartner2: !!partner2Name,
+          weddingDate: selectedDate,
+        },
+      })
+
+      toast({
+        title: "Başarılı!",
+        description: "Save the Date bağlantınız oluşturuldu.",
+      })
+    } catch (error) {
+      console.error("Error creating Save the Date:", error)
+      toast({
+        title: "Hata",
+        description: "Bağlantı oluşturulurken bir hata oluştu.",
+        variant: "destructive",
+      })
+    } finally {
+      setIsCreating(false)
+    }
   }
 
   const copyLinkToClipboard = () => {
@@ -54,6 +78,12 @@ export default function SaveTheDateCreatorPage() {
       toast({
         title: "Link Kopyalandı!",
         description: "Paylaşılabilir bağlantı panoya kopyalandı.",
+      })
+
+      // Track copy event
+      trackEvent({
+        event: "save_the_date_link_copied",
+        userId: user?.id,
       })
     }
   }
@@ -83,14 +113,15 @@ export default function SaveTheDateCreatorPage() {
             <CardContent className="space-y-4">
               <div>
                 <Label htmlFor="wedding-date-input" className="mb-2 block">
-                  Düğün Tarihi
+                  Düğün Tarihi *
                 </Label>
                 <Input
                   id="wedding-date-input"
                   type="date"
                   value={selectedDate}
-                  onChange={handleDateChange}
+                  onChange={(e) => setSelectedDate(e.target.value)}
                   className="w-full"
+                  required
                 />
               </div>
               <div>
@@ -101,7 +132,7 @@ export default function SaveTheDateCreatorPage() {
                   id="partner1-name-input"
                   type="text"
                   value={partner1Name}
-                  onChange={handlePartner1NameChange}
+                  onChange={(e) => setPartner1Name(e.target.value)}
                   placeholder="Örn: Ayşe"
                   className="w-full"
                 />
@@ -114,17 +145,29 @@ export default function SaveTheDateCreatorPage() {
                   id="partner2-name-input"
                   type="text"
                   value={partner2Name}
-                  onChange={handlePartner2NameChange}
+                  onChange={(e) => setPartner2Name(e.target.value)}
                   placeholder="Örn: Can"
                   className="w-full"
                 />
               </div>
-              {selectedDate && (partner1Name || partner2Name) && (
+
+              <Button onClick={handleCreateLink} disabled={!selectedDate || isCreating} className="w-full">
+                {isCreating ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Oluşturuluyor...
+                  </>
+                ) : (
+                  "Bağlantı Oluştur"
+                )}
+              </Button>
+
+              {shareableLink && (
                 <div className="space-y-2">
                   <Label>Paylaşılabilir Bağlantı</Label>
                   <div className="flex items-center space-x-2">
                     <Input value={shareableLink} readOnly className="flex-grow" />
-                    <Button onClick={copyLinkToClipboard} disabled={!shareableLink}>
+                    <Button onClick={copyLinkToClipboard}>
                       <Copy className="h-4 w-4" />
                       <span className="sr-only">Bağlantıyı Kopyala</span>
                     </Button>

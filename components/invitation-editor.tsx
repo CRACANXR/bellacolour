@@ -34,8 +34,13 @@ import {
   Underline,
   Upload,
   ChevronDown,
+  Loader2,
 } from "lucide-react"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+
+import { saveProject, updateProject, trackEvent } from "@/lib/api-service"
+import { useAuth } from "@/contexts/auth-context"
+import { useToast } from "@/hooks/use-toast"
 
 interface TemplateElement {
   type: string
@@ -85,6 +90,11 @@ export function InvitationEditor({ template, onBack }: InvitationEditorProps) {
   const [isDragging, setIsDragging] = useState(false)
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 })
   const [loadedImages, setLoadedImages] = useState<Map<string, HTMLImageElement>>(new Map())
+
+  const { user } = useAuth()
+  const { toast } = useToast()
+  const [isSaving, setIsSaving] = useState(false)
+  const [projectId, setProjectId] = useState<string | null>(null)
 
   useEffect(() => {
     drawCanvas()
@@ -477,14 +487,93 @@ export function InvitationEditor({ template, onBack }: InvitationEditorProps) {
     setSelectedElement(newElement)
   }
 
-  const exportDesign = () => {
+  const exportDesign = async () => {
     const canvas = canvasRef.current
     if (!canvas) return
 
-    const link = document.createElement("a")
-    link.download = `wedding-invitation-${template.name.toLowerCase().replace(/\s+/g, "-")}.png`
-    link.href = canvas.toDataURL()
-    link.click()
+    try {
+      // Track export event
+      await trackEvent({
+        event: "invitation_exported",
+        userId: user?.id,
+        data: {
+          templateId: template.id,
+          templateName: template.name,
+          elementCount: elements.length,
+        },
+      })
+
+      const link = document.createElement("a")
+      link.download = `wedding-invitation-${template.name.toLowerCase().replace(/\s+/g, "-")}.png`
+      link.href = canvas.toDataURL()
+      link.click()
+    } catch (error) {
+      console.error("Export tracking error:", error)
+      // Still allow export even if tracking fails
+      const link = document.createElement("a")
+      link.download = `wedding-invitation-${template.name.toLowerCase().replace(/\s+/g, "-")}.png`
+      link.href = canvas.toDataURL()
+      link.click()
+    }
+  }
+
+  const saveDesign = async () => {
+    if (!user) {
+      toast({
+        title: "Giriş Gerekli",
+        description: "Projeyi kaydetmek için giriş yapmanız gerekiyor.",
+        variant: "destructive",
+      })
+      return
+    }
+
+    setIsSaving(true)
+
+    try {
+      const projectData = {
+        title: `${template.name} - ${new Date().toLocaleDateString("tr-TR")}`,
+        type: "invitation" as const,
+        templateId: template.id,
+        elements: elements,
+        userId: user.id,
+      }
+
+      let response
+      if (projectId) {
+        // Update existing project
+        response = await updateProject(projectId, projectData)
+      } else {
+        // Create new project
+        response = await saveProject(projectData)
+        setProjectId(response.id)
+      }
+
+      // Track save event
+      await trackEvent({
+        event: "invitation_saved",
+        userId: user.id,
+        data: {
+          projectId: response.id,
+          templateId: template.id,
+          templateName: template.name,
+          elementCount: elements.length,
+        },
+      })
+
+      toast({
+        title: "Başarılı!",
+        description: "Tasarımınız kaydedildi.",
+      })
+    } catch (error) {
+      console.error("Save error:", error)
+      toast({
+        title: "Hata",
+        description: "Tasarım kaydedilirken bir hata oluştu.",
+        variant: "destructive",
+      })
+    } finally {
+      setIsSaving(false)
+    }
   }
 
   const addShape = (shapeType: string) => {
@@ -560,9 +649,18 @@ export function InvitationEditor({ template, onBack }: InvitationEditorProps) {
               <Redo className="h-4 w-4" />
             </Button>
             <Separator orientation="vertical" className="h-6" />
-            <Button variant="outline" size="sm">
-              <Save className="h-4 w-4 mr-2" />
-              Save
+            <Button variant="outline" size="sm" onClick={saveDesign} disabled={isSaving}>
+              {isSaving ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Kaydediliyor...
+                </>
+              ) : (
+                <>
+                  <Save className="h-4 w-4 mr-2" />
+                  Kaydet
+                </>
+              )}
             </Button>
             <Button onClick={exportDesign} size="sm">
               <Download className="h-4 w-4 mr-2" />
