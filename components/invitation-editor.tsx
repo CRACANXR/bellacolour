@@ -10,6 +10,9 @@ import { Slider } from "@/components/ui/slider"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Separator } from "@/components/ui/separator"
 import { Badge } from "@/components/ui/badge"
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { ScrollArea } from "@/components/ui/scroll-area"
 import {
   ArrowLeft,
   Type,
@@ -35,6 +38,8 @@ import {
   Upload,
   ChevronDown,
   Loader2,
+  Move,
+  Plus,
 } from "lucide-react"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 
@@ -81,24 +86,66 @@ interface InvitationEditorProps {
 export function InvitationEditor({ template, onBack }: InvitationEditorProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const containerRef = useRef<HTMLDivElement>(null)
+
   const [elements, setElements] = useState<TemplateElement[]>(
     template.elements.map((el, index) => ({ ...el, id: `element-${index}` })),
   )
   const [selectedElement, setSelectedElement] = useState<TemplateElement | null>(null)
   const [tool, setTool] = useState<string>("select")
-  const [canvasSize] = useState({ width: 400, height: 600 })
+  const [canvasSize, setCanvasSize] = useState({ width: 400, height: 600 })
+  const [canvasScale, setCanvasScale] = useState(1)
   const [isDragging, setIsDragging] = useState(false)
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 })
   const [loadedImages, setLoadedImages] = useState<Map<string, HTMLImageElement>>(new Map())
+  const [showMobileMenu, setShowMobileMenu] = useState(false)
+  const [activeTab, setActiveTab] = useState("tools")
 
   const { user } = useAuth()
   const { toast } = useToast()
   const [isSaving, setIsSaving] = useState(false)
   const [projectId, setProjectId] = useState<string | null>(null)
 
+  // Responsive canvas sizing
+  useEffect(() => {
+    const updateCanvasSize = () => {
+      if (containerRef.current) {
+        const container = containerRef.current
+        const containerWidth = container.clientWidth - 32 // padding
+        const containerHeight = container.clientHeight - 32
+
+        // Base canvas dimensions
+        const baseWidth = 400
+        const baseHeight = 600
+        const aspectRatio = baseWidth / baseHeight
+
+        let newWidth = baseWidth
+        let newHeight = baseHeight
+        let scale = 1
+
+        // Calculate scale to fit container
+        if (containerWidth < baseWidth || containerHeight < baseHeight) {
+          const scaleX = containerWidth / baseWidth
+          const scaleY = containerHeight / baseHeight
+          scale = Math.min(scaleX, scaleY, 1)
+
+          newWidth = baseWidth * scale
+          newHeight = baseHeight * scale
+        }
+
+        setCanvasSize({ width: baseWidth, height: baseHeight })
+        setCanvasScale(scale)
+      }
+    }
+
+    updateCanvasSize()
+    window.addEventListener("resize", updateCanvasSize)
+    return () => window.removeEventListener("resize", updateCanvasSize)
+  }, [])
+
   useEffect(() => {
     drawCanvas()
-  }, [elements, selectedElement, loadedImages])
+  }, [elements, selectedElement, loadedImages, canvasSize])
 
   const loadImage = (src: string): Promise<HTMLImageElement> => {
     return new Promise((resolve, reject) => {
@@ -126,7 +173,6 @@ export function InvitationEditor({ template, onBack }: InvitationEditorProps) {
 
     ctx.save()
 
-    // Set fill and stroke properties
     if (element.fillColor && element.fillColor !== "transparent") {
       ctx.fillStyle = element.fillColor
     }
@@ -204,7 +250,6 @@ export function InvitationEditor({ template, onBack }: InvitationEditorProps) {
         ctx.rect(x - width / 2, y - height / 2, width, height)
     }
 
-    // Fill and stroke
     if (element.fillColor && element.fillColor !== "transparent") {
       ctx.fill()
     }
@@ -222,16 +267,13 @@ export function InvitationEditor({ template, onBack }: InvitationEditorProps) {
     const ctx = canvas.getContext("2d")
     if (!ctx) return
 
-    // Clear canvas
     ctx.fillStyle = "#ffffff"
     ctx.fillRect(0, 0, canvas.width, canvas.height)
 
-    // Draw border
     ctx.strokeStyle = "#e5e7eb"
     ctx.lineWidth = 2
     ctx.strokeRect(0, 0, canvas.width, canvas.height)
 
-    // Draw elements
     elements.forEach((element) => {
       if (element.type === "text") {
         ctx.fillStyle = element.color || "#000000"
@@ -270,50 +312,37 @@ export function InvitationEditor({ template, onBack }: InvitationEditorProps) {
         const x = element.x - width / 2
         const y = element.y - height / 2
 
-        // Save current context
         ctx.save()
-
-        // Set border properties
         ctx.strokeStyle = element.borderColor || "#000000"
         ctx.lineWidth = element.borderWidth || 2
 
-        // Set line dash for dashed borders
         if (element.borderStyle === "dashed") {
           ctx.setLineDash([5, 5])
         } else {
           ctx.setLineDash([])
         }
 
-        // Fill background if color is set and not transparent
         if (element.color && element.color !== "transparent") {
           ctx.fillStyle = element.color
           if (element.borderRadius && element.borderRadius > 0) {
-            // Rounded rectangle fill
             ctx.beginPath()
             ctx.roundRect(x, y, width, height, element.borderRadius)
             ctx.fill()
           } else {
-            // Regular rectangle fill
             ctx.fillRect(x, y, width, height)
           }
         }
 
-        // Draw border
         ctx.beginPath()
         if (element.borderRadius && element.borderRadius > 0) {
-          // Rounded rectangle border
           ctx.roundRect(x, y, width, height, element.borderRadius)
         } else {
-          // Regular rectangle border
           ctx.rect(x, y, width, height)
         }
         ctx.stroke()
-
-        // Restore context
         ctx.restore()
       }
 
-      // Highlight selected element
       if (selectedElement && selectedElement.id === element.id) {
         ctx.strokeStyle = "#3b82f6"
         ctx.lineWidth = 2
@@ -341,7 +370,13 @@ export function InvitationEditor({ template, onBack }: InvitationEditorProps) {
     const canvas = canvasRef.current
     if (!canvas) return null
 
-    // Check elements in reverse order (top to bottom)
+    // Adjust coordinates for canvas scaling
+    const adjustedX = x / canvasScale
+    const adjustedY = y / canvasScale
+
+    const isMobile = window.innerWidth < 768
+    const touchPadding = isMobile ? 20 : 8
+
     for (let i = elements.length - 1; i >= 0; i--) {
       const element = elements[i]
 
@@ -352,10 +387,10 @@ export function InvitationEditor({ template, onBack }: InvitationEditorProps) {
         const metrics = ctx.measureText(element.content)
 
         if (
-          x >= element.x - metrics.width / 2 - 5 &&
-          x <= element.x + metrics.width / 2 + 5 &&
-          y >= element.y - (element.fontSize || 16) - 5 &&
-          y <= element.y + 5
+          adjustedX >= element.x - metrics.width / 2 - touchPadding &&
+          adjustedX <= element.x + metrics.width / 2 + touchPadding &&
+          adjustedY >= element.y - (element.fontSize || 16) - touchPadding &&
+          adjustedY <= element.y + touchPadding
         ) {
           return element
         }
@@ -364,10 +399,10 @@ export function InvitationEditor({ template, onBack }: InvitationEditorProps) {
         const height = element.height || 100
 
         if (
-          x >= element.x - width / 2 &&
-          x <= element.x + width / 2 &&
-          y >= element.y - height / 2 &&
-          y <= element.y + height / 2
+          adjustedX >= element.x - width / 2 - touchPadding &&
+          adjustedX <= element.x + width / 2 + touchPadding &&
+          adjustedY >= element.y - height / 2 - touchPadding &&
+          adjustedY <= element.y + height / 2 + touchPadding
         ) {
           return element
         }
@@ -376,15 +411,21 @@ export function InvitationEditor({ template, onBack }: InvitationEditorProps) {
     return null
   }
 
-  const handleCanvasMouseDown = (event: React.MouseEvent<HTMLCanvasElement>) => {
+  const getCanvasCoordinates = (clientX: number, clientY: number) => {
     const canvas = canvasRef.current
-    if (!canvas) return
+    if (!canvas) return { x: 0, y: 0 }
 
     const rect = canvas.getBoundingClientRect()
-    const x = event.clientX - rect.left
-    const y = event.clientY - rect.top
+    return {
+      x: (clientX - rect.left) / canvasScale,
+      y: (clientY - rect.top) / canvasScale,
+    }
+  }
 
-    const clickedElement = getElementAtPosition(x, y)
+  const handleCanvasPointerDown = (event: React.PointerEvent<HTMLCanvasElement>) => {
+    event.preventDefault()
+    const { x, y } = getCanvasCoordinates(event.clientX, event.clientY)
+    const clickedElement = getElementAtPosition(x * canvasScale, y * canvasScale)
 
     if (tool === "select" && clickedElement) {
       setSelectedElement(clickedElement)
@@ -412,23 +453,69 @@ export function InvitationEditor({ template, onBack }: InvitationEditorProps) {
     }
   }
 
-  const handleCanvasMouseMove = (event: React.MouseEvent<HTMLCanvasElement>) => {
+  const handleCanvasPointerMove = (event: React.PointerEvent<HTMLCanvasElement>) => {
     if (!isDragging || !selectedElement) return
+    event.preventDefault()
 
-    const canvas = canvasRef.current
-    if (!canvas) return
-
-    const rect = canvas.getBoundingClientRect()
-    const x = event.clientX - rect.left
-    const y = event.clientY - rect.top
-
+    const { x, y } = getCanvasCoordinates(event.clientX, event.clientY)
     const newX = x - dragOffset.x
     const newY = y - dragOffset.y
 
     updateSelectedElement({ x: newX, y: newY })
   }
 
-  const handleCanvasMouseUp = () => {
+  const handleCanvasPointerUp = (event: React.PointerEvent<HTMLCanvasElement>) => {
+    event.preventDefault()
+    setIsDragging(false)
+    setDragOffset({ x: 0, y: 0 })
+  }
+
+  const handleCanvasTouchStart = (event: React.TouchEvent<HTMLCanvasElement>) => {
+    event.preventDefault()
+    const touch = event.touches[0]
+    const { x, y } = getCanvasCoordinates(touch.clientX, touch.clientY)
+    const clickedElement = getElementAtPosition(x * canvasScale, y * canvasScale)
+
+    if (tool === "select" && clickedElement) {
+      setSelectedElement(clickedElement)
+      setIsDragging(true)
+      setDragOffset({
+        x: x - clickedElement.x,
+        y: y - clickedElement.y,
+      })
+    } else if (tool === "text" && !clickedElement) {
+      const newElement: TemplateElement = {
+        id: `element-${Date.now()}`,
+        type: "text",
+        content: "New Text",
+        x,
+        y,
+        fontSize: 16,
+        fontFamily: "serif",
+        color: "#000000",
+      }
+      setElements([...elements, newElement])
+      setSelectedElement(newElement)
+      setTool("select")
+    } else if (!clickedElement) {
+      setSelectedElement(null)
+    }
+  }
+
+  const handleCanvasTouchMove = (event: React.TouchEvent<HTMLCanvasElement>) => {
+    if (!isDragging || !selectedElement) return
+    event.preventDefault()
+
+    const touch = event.touches[0]
+    const { x, y } = getCanvasCoordinates(touch.clientX, touch.clientY)
+    const newX = x - dragOffset.x
+    const newY = y - dragOffset.y
+
+    updateSelectedElement({ x: newX, y: newY })
+  }
+
+  const handleCanvasTouchEnd = (event: React.TouchEvent<HTMLCanvasElement>) => {
+    event.preventDefault()
     setIsDragging(false)
     setDragOffset({ x: 0, y: 0 })
   }
@@ -467,6 +554,10 @@ export function InvitationEditor({ template, onBack }: InvitationEditorProps) {
     const updatedElement = { ...selectedElement, ...updates }
     setElements(elements.map((el) => (el.id === selectedElement.id ? updatedElement : el)))
     setSelectedElement(updatedElement)
+
+    if ("vibrate" in navigator && isDragging) {
+      navigator.vibrate(10)
+    }
   }
 
   const deleteSelectedElement = () => {
@@ -492,7 +583,6 @@ export function InvitationEditor({ template, onBack }: InvitationEditorProps) {
     if (!canvas) return
 
     try {
-      // Track export event
       await trackEvent({
         event: "invitation_exported",
         userId: user?.id,
@@ -509,7 +599,6 @@ export function InvitationEditor({ template, onBack }: InvitationEditorProps) {
       link.click()
     } catch (error) {
       console.error("Export tracking error:", error)
-      // Still allow export even if tracking fails
       const link = document.createElement("a")
       link.download = `wedding-invitation-${template.name.toLowerCase().replace(/\s+/g, "-")}.png`
       link.href = canvas.toDataURL()
@@ -540,15 +629,12 @@ export function InvitationEditor({ template, onBack }: InvitationEditorProps) {
 
       let response
       if (projectId) {
-        // Update existing project
         response = await updateProject(projectId, projectData)
       } else {
-        // Create new project
         response = await saveProject(projectData)
         setProjectId(response.id)
       }
 
-      // Track save event
       await trackEvent({
         event: "invitation_saved",
         userId: user.id,
@@ -594,6 +680,7 @@ export function InvitationEditor({ template, onBack }: InvitationEditorProps) {
     setElements([...elements, newElement])
     setSelectedElement(newElement)
     setTool("select")
+    setShowMobileMenu(false)
   }
 
   const addBorder = () => {
@@ -614,6 +701,7 @@ export function InvitationEditor({ template, onBack }: InvitationEditorProps) {
     setElements([...elements, newElement])
     setSelectedElement(newElement)
     setTool("select")
+    setShowMobileMenu(false)
   }
 
   const shapes = [
@@ -627,548 +715,652 @@ export function InvitationEditor({ template, onBack }: InvitationEditorProps) {
     { name: "Hexagon", type: "hexagon", icon: Square },
   ]
 
-  return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <div className="bg-white border-b border-gray-200 px-4 py-3">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <Button variant="ghost" size="sm" onClick={onBack}>
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Back to Templates
+  const ToolButton = ({
+    isActive,
+    onClick,
+    icon: Icon,
+    label,
+    className = "",
+  }: {
+    isActive: boolean
+    onClick: () => void
+    icon: React.ComponentType<{ className?: string }>
+    label: string
+    className?: string
+  }) => (
+    <Button
+      variant={isActive ? "default" : "ghost"}
+      size="sm"
+      onClick={onClick}
+      className={`flex-1 sm:flex-none sm:w-12 sm:h-12 h-10 ${className}`}
+      title={label}
+    >
+      <Icon className="h-4 w-4" />
+      <span className="ml-2 sm:hidden">{label}</span>
+    </Button>
+  )
+
+  const PropertiesPanel = () => (
+    <div className="space-y-4">
+      {selectedElement ? (
+        <>
+          <div className="flex items-center gap-2 mb-4">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={duplicateSelectedElement}
+              className="flex-1 sm:flex-none bg-transparent"
+            >
+              <Copy className="h-4 w-4" />
+              <span className="ml-2 sm:hidden">Copy</span>
             </Button>
-            <Separator orientation="vertical" className="h-6" />
-            <h1 className="text-lg font-semibold">Editing: {template.name}</h1>
-            <Badge variant="secondary">{template.category}</Badge>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={deleteSelectedElement}
+              className="flex-1 sm:flex-none bg-transparent"
+            >
+              <Trash2 className="h-4 w-4" />
+              <span className="ml-2 sm:hidden">Delete</span>
+            </Button>
           </div>
-          <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm">
-              <Undo className="h-4 w-4" />
-            </Button>
-            <Button variant="outline" size="sm">
-              <Redo className="h-4 w-4" />
-            </Button>
-            <Separator orientation="vertical" className="h-6" />
-            <Button variant="outline" size="sm" onClick={saveDesign} disabled={isSaving}>
-              {isSaving ? (
-                <>
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  Kaydediliyor...
-                </>
-              ) : (
-                <>
-                  <Save className="h-4 w-4 mr-2" />
-                  Kaydet
-                </>
-              )}
-            </Button>
-            <Button onClick={exportDesign} size="sm">
-              <Download className="h-4 w-4 mr-2" />
-              Export
-            </Button>
-          </div>
-        </div>
-      </div>
 
-      <div className="flex h-[calc(100vh-73px)]">
-        {/* Toolbar */}
-        <div className="w-16 bg-white border-r border-gray-200 flex flex-col items-center py-4 gap-2">
-          <Button
-            variant={tool === "select" ? "default" : "ghost"}
-            size="sm"
-            onClick={() => setTool("select")}
-            className="w-10 h-10 p-0"
-            title="Select Tool"
-          >
-            <div className="w-4 h-4 border border-current" />
-          </Button>
-          <Button
-            variant={tool === "text" ? "default" : "ghost"}
-            size="sm"
-            onClick={() => setTool("text")}
-            className="w-10 h-10 p-0"
-            title="Text Tool"
-          >
-            <Type className="h-4 w-4" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => fileInputRef.current?.click()}
-            className="w-10 h-10 p-0"
-            title="Upload Image"
-          >
-            <ImageIcon className="h-4 w-4" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => addShape("rectangle")}
-            className="w-10 h-10 p-0"
-            title="Add Rectangle"
-          >
-            <Square className="h-4 w-4" />
-          </Button>
-        </div>
-
-        {/* Hidden file input */}
-        <input ref={fileInputRef} type="file" accept="image/*" onChange={handleImageUpload} className="hidden" />
-
-        {/* Canvas Area */}
-        <div className="flex-1 flex items-center justify-center p-8">
-          <div className="bg-white rounded-lg shadow-lg p-8">
-            <canvas
-              ref={canvasRef}
-              width={canvasSize.width}
-              height={canvasSize.height}
-              onMouseDown={handleCanvasMouseDown}
-              onMouseMove={handleCanvasMouseMove}
-              onMouseUp={handleCanvasMouseUp}
-              onMouseLeave={handleCanvasMouseUp}
-              className="border border-gray-300 cursor-crosshair"
-              style={{ cursor: isDragging ? "grabbing" : tool === "select" ? "grab" : "crosshair" }}
-            />
-          </div>
-        </div>
-
-        {/* Properties Panel */}
-        <div className="w-80 bg-white border-l border-gray-200 p-4 overflow-y-auto">
-          <h3 className="text-lg font-semibold mb-4">Properties</h3>
-
-          {selectedElement ? (
-            <div className="space-y-4">
-              <div className="flex items-center gap-2 mb-4">
-                <Button variant="outline" size="sm" onClick={duplicateSelectedElement}>
-                  <Copy className="h-4 w-4" />
-                </Button>
-                <Button variant="outline" size="sm" onClick={deleteSelectedElement}>
-                  <Trash2 className="h-4 w-4" />
-                </Button>
+          {selectedElement.type === "text" && (
+            <>
+              <div>
+                <Label htmlFor="text-content">Text Content</Label>
+                <Input
+                  id="text-content"
+                  value={selectedElement.content}
+                  onChange={(e) => updateSelectedElement({ content: e.target.value })}
+                  className="mt-1"
+                />
               </div>
 
-              {selectedElement.type === "text" && (
-                <>
-                  <div>
-                    <Label htmlFor="text-content">Text Content</Label>
-                    <Input
-                      id="text-content"
-                      value={selectedElement.content}
-                      onChange={(e) => updateSelectedElement({ content: e.target.value })}
-                      className="mt-1"
-                    />
-                  </div>
+              <div>
+                <Label htmlFor="font-family">Font Family</Label>
+                <Select
+                  value={selectedElement.fontFamily}
+                  onValueChange={(value) => updateSelectedElement({ fontFamily: value })}
+                >
+                  <SelectTrigger className="mt-1">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="serif">Serif</SelectItem>
+                    <SelectItem value="sans-serif">Sans Serif</SelectItem>
+                    <SelectItem value="cursive">Cursive</SelectItem>
+                    <SelectItem value="monospace">Monospace</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
 
-                  <div>
-                    <Label htmlFor="font-family">Font Family</Label>
-                    <Select
-                      value={selectedElement.fontFamily}
-                      onValueChange={(value) => updateSelectedElement({ fontFamily: value })}
-                    >
-                      <SelectTrigger className="mt-1">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="serif">Serif</SelectItem>
-                        <SelectItem value="sans-serif">Sans Serif</SelectItem>
-                        <SelectItem value="cursive">Cursive</SelectItem>
-                        <SelectItem value="monospace">Monospace</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
+              <div>
+                <Label htmlFor="font-size">Font Size: {selectedElement.fontSize}px</Label>
+                <Slider
+                  id="font-size"
+                  min={8}
+                  max={72}
+                  step={1}
+                  value={[selectedElement.fontSize || 16]}
+                  onValueChange={([value]) => updateSelectedElement({ fontSize: value })}
+                  className="mt-2"
+                />
+              </div>
 
-                  <div>
-                    <Label htmlFor="font-size">Font Size: {selectedElement.fontSize}px</Label>
-                    <Slider
-                      id="font-size"
-                      min={8}
-                      max={72}
-                      step={1}
-                      value={[selectedElement.fontSize || 16]}
-                      onValueChange={([value]) => updateSelectedElement({ fontSize: value })}
-                      className="mt-2"
-                    />
-                  </div>
+              <div>
+                <Label htmlFor="text-color">Text Color</Label>
+                <Input
+                  id="text-color"
+                  type="color"
+                  value={selectedElement.color}
+                  onChange={(e) => updateSelectedElement({ color: e.target.value })}
+                  className="mt-1 h-10"
+                />
+              </div>
 
-                  <div>
-                    <Label htmlFor="text-color">Text Color</Label>
-                    <Input
-                      id="text-color"
-                      type="color"
-                      value={selectedElement.color}
-                      onChange={(e) => updateSelectedElement({ color: e.target.value })}
-                      className="mt-1 h-10"
-                    />
-                  </div>
-
-                  <div>
-                    <Label>Text Style</Label>
-                    <div className="flex gap-1 mt-2">
-                      <Button
-                        variant={selectedElement.bold ? "default" : "outline"}
-                        size="sm"
-                        onClick={() => updateSelectedElement({ bold: !selectedElement.bold })}
-                      >
-                        <Bold className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant={selectedElement.italic ? "default" : "outline"}
-                        size="sm"
-                        onClick={() => updateSelectedElement({ italic: !selectedElement.italic })}
-                      >
-                        <Italic className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant={selectedElement.underline ? "default" : "outline"}
-                        size="sm"
-                        onClick={() => updateSelectedElement({ underline: !selectedElement.underline })}
-                      >
-                        <Underline className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </div>
-
-                  <div>
-                    <Label>Text Alignment</Label>
-                    <div className="flex gap-1 mt-2">
-                      <Button
-                        variant={selectedElement.align === "left" ? "default" : "outline"}
-                        size="sm"
-                        onClick={() => updateSelectedElement({ align: "left" })}
-                      >
-                        <AlignLeft className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant={selectedElement.align === "center" || !selectedElement.align ? "default" : "outline"}
-                        size="sm"
-                        onClick={() => updateSelectedElement({ align: "center" })}
-                      >
-                        <AlignCenter className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant={selectedElement.align === "right" ? "default" : "outline"}
-                        size="sm"
-                        onClick={() => updateSelectedElement({ align: "right" })}
-                      >
-                        <AlignRight className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </div>
-                </>
-              )}
-
-              {selectedElement.type === "image" && (
-                <>
-                  <div>
-                    <Label htmlFor="image-name">Image Name</Label>
-                    <Input
-                      id="image-name"
-                      value={selectedElement.content}
-                      onChange={(e) => updateSelectedElement({ content: e.target.value })}
-                      className="mt-1"
-                    />
-                  </div>
-
-                  <div>
-                    <Label htmlFor="image-width">Width: {selectedElement.width}px</Label>
-                    <Slider
-                      id="image-width"
-                      min={50}
-                      max={300}
-                      step={5}
-                      value={[selectedElement.width || 100]}
-                      onValueChange={([value]) => updateSelectedElement({ width: value })}
-                      className="mt-2"
-                    />
-                  </div>
-
-                  <div>
-                    <Label htmlFor="image-height">Height: {selectedElement.height}px</Label>
-                    <Slider
-                      id="image-height"
-                      min={50}
-                      max={300}
-                      step={5}
-                      value={[selectedElement.height || 100]}
-                      onValueChange={([value]) => updateSelectedElement({ height: value })}
-                      className="mt-2"
-                    />
-                  </div>
-                </>
-              )}
-
-              {selectedElement.type === "shape" && (
-                <>
-                  <div>
-                    <Label htmlFor="shape-type">Shape Type</Label>
-                    <Select
-                      value={selectedElement.shapeType}
-                      onValueChange={(value) => updateSelectedElement({ shapeType: value })}
-                    >
-                      <SelectTrigger className="mt-1">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {shapes.map((shape) => (
-                          <SelectItem key={shape.type} value={shape.type}>
-                            {shape.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div>
-                    <Label htmlFor="fill-color">Fill Color</Label>
-                    <Input
-                      id="fill-color"
-                      type="color"
-                      value={selectedElement.fillColor || "#f3f4f6"}
-                      onChange={(e) => updateSelectedElement({ fillColor: e.target.value })}
-                      className="mt-1 h-10"
-                    />
-                  </div>
-
-                  <div>
-                    <Label htmlFor="border-color">Border Color</Label>
-                    <Input
-                      id="border-color"
-                      type="color"
-                      value={selectedElement.borderColor || "#000000"}
-                      onChange={(e) => updateSelectedElement({ borderColor: e.target.value })}
-                      className="mt-1 h-10"
-                    />
-                  </div>
-
-                  <div>
-                    <Label htmlFor="border-width">Border Width: {selectedElement.borderWidth}px</Label>
-                    <Slider
-                      id="border-width"
-                      min={0}
-                      max={20}
-                      step={1}
-                      value={[selectedElement.borderWidth || 2]}
-                      onValueChange={([value]) => updateSelectedElement({ borderWidth: value })}
-                      className="mt-2"
-                    />
-                  </div>
-
-                  <div>
-                    <Label htmlFor="border-style">Border Style</Label>
-                    <Select
-                      value={selectedElement.borderStyle || "solid"}
-                      onValueChange={(value) => updateSelectedElement({ borderStyle: value })}
-                    >
-                      <SelectTrigger className="mt-1">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="solid">Solid</SelectItem>
-                        <SelectItem value="dashed">Dashed</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div>
-                    <Label htmlFor="shape-width">Width: {selectedElement.width}px</Label>
-                    <Slider
-                      id="shape-width"
-                      min={20}
-                      max={300}
-                      step={5}
-                      value={[selectedElement.width || 100]}
-                      onValueChange={([value]) => updateSelectedElement({ width: value })}
-                      className="mt-2"
-                    />
-                  </div>
-
-                  <div>
-                    <Label htmlFor="shape-height">Height: {selectedElement.height}px</Label>
-                    <Slider
-                      id="shape-height"
-                      min={20}
-                      max={300}
-                      step={5}
-                      value={[selectedElement.height || 100]}
-                      onValueChange={([value]) => updateSelectedElement({ height: value })}
-                      className="mt-2"
-                    />
-                  </div>
-                </>
-              )}
-
-              {selectedElement.type === "border" && (
-                <>
-                  <div>
-                    <Label htmlFor="border-width">Border Width: {selectedElement.borderWidth}px</Label>
-                    <Slider
-                      id="border-width"
-                      min={1}
-                      max={20}
-                      step={1}
-                      value={[selectedElement.borderWidth || 2]}
-                      onValueChange={([value]) => updateSelectedElement({ borderWidth: value })}
-                      className="mt-2"
-                    />
-                  </div>
-
-                  <div>
-                    <Label htmlFor="border-color">Border Color</Label>
-                    <Input
-                      id="border-color"
-                      type="color"
-                      value={selectedElement.borderColor || "#000000"}
-                      onChange={(e) => updateSelectedElement({ borderColor: e.target.value })}
-                      className="mt-1 h-10"
-                    />
-                  </div>
-
-                  <div>
-                    <Label htmlFor="fill-color">Fill Color</Label>
-                    <Input
-                      id="fill-color"
-                      type="color"
-                      value={selectedElement.color || "#ffffff"}
-                      onChange={(e) => updateSelectedElement({ color: e.target.value })}
-                      className="mt-1 h-10"
-                    />
-                  </div>
-
-                  <div>
-                    <Label htmlFor="border-style">Border Style</Label>
-                    <Select
-                      value={selectedElement.borderStyle || "solid"}
-                      onValueChange={(value) => updateSelectedElement({ borderStyle: value })}
-                    >
-                      <SelectTrigger className="mt-1">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="solid">Solid</SelectItem>
-                        <SelectItem value="dashed">Dashed</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div>
-                    <Label htmlFor="border-radius">Corner Radius: {selectedElement.borderRadius}px</Label>
-                    <Slider
-                      id="border-radius"
-                      min={0}
-                      max={50}
-                      step={1}
-                      value={[selectedElement.borderRadius || 0]}
-                      onValueChange={([value]) => updateSelectedElement({ borderRadius: value })}
-                      className="mt-2"
-                    />
-                  </div>
-
-                  <div>
-                    <Label htmlFor="border-width-control">Width: {selectedElement.width}px</Label>
-                    <Slider
-                      id="border-width-control"
-                      min={50}
-                      max={350}
-                      step={5}
-                      value={[selectedElement.width || 200]}
-                      onValueChange={([value]) => updateSelectedElement({ width: value })}
-                      className="mt-2"
-                    />
-                  </div>
-
-                  <div>
-                    <Label htmlFor="border-height-control">Height: {selectedElement.height}px</Label>
-                    <Slider
-                      id="border-height-control"
-                      min={50}
-                      max={350}
-                      step={5}
-                      value={[selectedElement.height || 150]}
-                      onValueChange={([value]) => updateSelectedElement({ height: value })}
-                      className="mt-2"
-                    />
-                  </div>
-                </>
-              )}
-
-              <div className="grid grid-cols-2 gap-2">
-                <div>
-                  <Label htmlFor="pos-x">X Position</Label>
-                  <Input
-                    id="pos-x"
-                    type="number"
-                    value={selectedElement.x}
-                    onChange={(e) => updateSelectedElement({ x: Number.parseInt(e.target.value) || 0 })}
-                    className="mt-1"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="pos-y">Y Position</Label>
-                  <Input
-                    id="pos-y"
-                    type="number"
-                    value={selectedElement.y}
-                    onChange={(e) => updateSelectedElement({ y: Number.parseInt(e.target.value) || 0 })}
-                    className="mt-1"
-                  />
+              <div>
+                <Label>Text Style</Label>
+                <div className="flex gap-1 mt-2">
+                  <Button
+                    variant={selectedElement.bold ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => updateSelectedElement({ bold: !selectedElement.bold })}
+                    className="flex-1"
+                  >
+                    <Bold className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant={selectedElement.italic ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => updateSelectedElement({ italic: !selectedElement.italic })}
+                    className="flex-1"
+                  >
+                    <Italic className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant={selectedElement.underline ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => updateSelectedElement({ underline: !selectedElement.underline })}
+                    className="flex-1"
+                  >
+                    <Underline className="h-4 w-4" />
+                  </Button>
                 </div>
               </div>
-            </div>
-          ) : (
-            <div className="text-center text-gray-500 py-8">
-              <Type className="h-12 w-12 mx-auto mb-4 opacity-50" />
-              <p>Select an element to edit its properties</p>
-              <p className="text-sm mt-2">Click and drag to move elements</p>
-            </div>
+
+              <div>
+                <Label>Text Alignment</Label>
+                <div className="flex gap-1 mt-2">
+                  <Button
+                    variant={selectedElement.align === "left" ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => updateSelectedElement({ align: "left" })}
+                    className="flex-1"
+                  >
+                    <AlignLeft className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant={selectedElement.align === "center" || !selectedElement.align ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => updateSelectedElement({ align: "center" })}
+                    className="flex-1"
+                  >
+                    <AlignCenter className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant={selectedElement.align === "right" ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => updateSelectedElement({ align: "right" })}
+                    className="flex-1"
+                  >
+                    <AlignRight className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+            </>
           )}
 
-          <Separator className="my-6" />
+          {selectedElement.type === "image" && (
+            <>
+              <div>
+                <Label htmlFor="image-name">Image Name</Label>
+                <Input
+                  id="image-name"
+                  value={selectedElement.content}
+                  onChange={(e) => updateSelectedElement({ content: e.target.value })}
+                  className="mt-1"
+                />
+              </div>
 
-          <div>
-            <h4 className="font-medium mb-3">Quick Actions</h4>
-            <div className="space-y-2">
-              <Button
-                variant="outline"
-                size="sm"
-                className="w-full justify-start bg-transparent"
+              <div>
+                <Label htmlFor="image-width">Width: {selectedElement.width}px</Label>
+                <Slider
+                  id="image-width"
+                  min={50}
+                  max={300}
+                  step={5}
+                  value={[selectedElement.width || 100]}
+                  onValueChange={([value]) => updateSelectedElement({ width: value })}
+                  className="mt-2"
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="image-height">Height: {selectedElement.height}px</Label>
+                <Slider
+                  id="image-height"
+                  min={50}
+                  max={300}
+                  step={5}
+                  value={[selectedElement.height || 100]}
+                  onValueChange={([value]) => updateSelectedElement({ height: value })}
+                  className="mt-2"
+                />
+              </div>
+            </>
+          )}
+
+          {selectedElement.type === "shape" && (
+            <>
+              <div>
+                <Label htmlFor="shape-type">Shape Type</Label>
+                <Select
+                  value={selectedElement.shapeType}
+                  onValueChange={(value) => updateSelectedElement({ shapeType: value })}
+                >
+                  <SelectTrigger className="mt-1">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {shapes.map((shape) => (
+                      <SelectItem key={shape.type} value={shape.type}>
+                        {shape.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
+                <Label htmlFor="fill-color">Fill Color</Label>
+                <Input
+                  id="fill-color"
+                  type="color"
+                  value={selectedElement.fillColor || "#f3f4f6"}
+                  onChange={(e) => updateSelectedElement({ fillColor: e.target.value })}
+                  className="mt-1 h-10"
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="border-color">Border Color</Label>
+                <Input
+                  id="border-color"
+                  type="color"
+                  value={selectedElement.borderColor || "#000000"}
+                  onChange={(e) => updateSelectedElement({ borderColor: e.target.value })}
+                  className="mt-1 h-10"
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="border-width">Border Width: {selectedElement.borderWidth}px</Label>
+                <Slider
+                  id="border-width"
+                  min={0}
+                  max={20}
+                  step={1}
+                  value={[selectedElement.borderWidth || 2]}
+                  onValueChange={([value]) => updateSelectedElement({ borderWidth: value })}
+                  className="mt-2"
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="shape-width">Width: {selectedElement.width}px</Label>
+                <Slider
+                  id="shape-width"
+                  min={20}
+                  max={300}
+                  step={5}
+                  value={[selectedElement.width || 100]}
+                  onValueChange={([value]) => updateSelectedElement({ width: value })}
+                  className="mt-2"
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="shape-height">Height: {selectedElement.height}px</Label>
+                <Slider
+                  id="shape-height"
+                  min={20}
+                  max={300}
+                  step={5}
+                  value={[selectedElement.height || 100]}
+                  onValueChange={([value]) => updateSelectedElement({ height: value })}
+                  className="mt-2"
+                />
+              </div>
+            </>
+          )}
+
+          {selectedElement.type === "border" && (
+            <>
+              <div>
+                <Label htmlFor="border-width">Border Width: {selectedElement.borderWidth}px</Label>
+                <Slider
+                  id="border-width"
+                  min={1}
+                  max={20}
+                  step={1}
+                  value={[selectedElement.borderWidth || 2]}
+                  onValueChange={([value]) => updateSelectedElement({ borderWidth: value })}
+                  className="mt-2"
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="border-color">Border Color</Label>
+                <Input
+                  id="border-color"
+                  type="color"
+                  value={selectedElement.borderColor || "#000000"}
+                  onChange={(e) => updateSelectedElement({ borderColor: e.target.value })}
+                  className="mt-1 h-10"
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="fill-color">Fill Color</Label>
+                <Input
+                  id="fill-color"
+                  type="color"
+                  value={selectedElement.color || "#ffffff"}
+                  onChange={(e) => updateSelectedElement({ color: e.target.value })}
+                  className="mt-1 h-10"
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="border-radius">Corner Radius: {selectedElement.borderRadius}px</Label>
+                <Slider
+                  id="border-radius"
+                  min={0}
+                  max={50}
+                  step={1}
+                  value={[selectedElement.borderRadius || 0]}
+                  onValueChange={([value]) => updateSelectedElement({ borderRadius: value })}
+                  className="mt-2"
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="border-width-control">Width: {selectedElement.width}px</Label>
+                <Slider
+                  id="border-width-control"
+                  min={50}
+                  max={350}
+                  step={5}
+                  value={[selectedElement.width || 200]}
+                  onValueChange={([value]) => updateSelectedElement({ width: value })}
+                  className="mt-2"
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="border-height-control">Height: {selectedElement.height}px</Label>
+                <Slider
+                  id="border-height-control"
+                  min={50}
+                  max={350}
+                  step={5}
+                  value={[selectedElement.height || 150]}
+                  onValueChange={([value]) => updateSelectedElement({ height: value })}
+                  className="mt-2"
+                />
+              </div>
+            </>
+          )}
+
+          <div className="grid grid-cols-2 gap-2">
+            <div>
+              <Label htmlFor="pos-x">X Position</Label>
+              <Input
+                id="pos-x"
+                type="number"
+                value={selectedElement.x}
+                onChange={(e) => updateSelectedElement({ x: Number.parseInt(e.target.value) || 0 })}
+                className="mt-1"
+              />
+            </div>
+            <div>
+              <Label htmlFor="pos-y">Y Position</Label>
+              <Input
+                id="pos-y"
+                type="number"
+                value={selectedElement.y}
+                onChange={(e) => updateSelectedElement({ y: Number.parseInt(e.target.value) || 0 })}
+                className="mt-1"
+              />
+            </div>
+          </div>
+        </>
+      ) : (
+        <div className="text-center text-gray-500 py-8">
+          <Type className="h-12 w-12 mx-auto mb-4 opacity-50" />
+          <p>Select an element to edit its properties</p>
+          <p className="text-sm mt-2">Tap and drag to move elements</p>
+        </div>
+      )}
+    </div>
+  )
+
+  return (
+    <div className="min-h-screen bg-gray-50 flex flex-col">
+      {/* Header */}
+      <div className="bg-white border-b border-gray-200 px-2 sm:px-4 py-3 flex-shrink-0">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2 sm:gap-4 min-w-0">
+            <Button variant="ghost" size="sm" onClick={onBack} className="flex-shrink-0">
+              <ArrowLeft className="h-4 w-4 mr-1 sm:mr-2" />
+              <span className="hidden xs:inline">Back</span>
+            </Button>
+            <Separator orientation="vertical" className="h-6 hidden sm:block" />
+            <div className="min-w-0">
+              <h1 className="text-sm sm:text-lg font-semibold truncate">
+                <span className="hidden sm:inline">Editing: </span>
+                {template.name}
+              </h1>
+              <Badge variant="secondary" className="hidden sm:inline-flex mt-1">
+                {template.category}
+              </Badge>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
+            <Button variant="outline" size="sm" className="hidden md:flex bg-transparent" disabled>
+              <Undo className="h-4 w-4" />
+            </Button>
+            <Button variant="outline" size="sm" className="hidden md:flex bg-transparent" disabled>
+              <Redo className="h-4 w-4" />
+            </Button>
+            <Separator orientation="vertical" className="h-6 hidden md:block" />
+
+            <Button variant="outline" size="sm" onClick={saveDesign} disabled={isSaving}>
+              {isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+              <span className="hidden sm:inline ml-2">{isSaving ? "Saving..." : "Save"}</span>
+            </Button>
+
+            <Button onClick={exportDesign} size="sm">
+              <Download className="h-4 w-4" />
+              <span className="hidden sm:inline ml-2">Export</span>
+            </Button>
+          </div>
+        </div>
+      </div>
+
+      <div className="flex flex-1 overflow-hidden">
+        {/* Desktop Sidebar */}
+        <div className="hidden lg:flex lg:w-16 bg-white border-r border-gray-200 flex-col items-center py-4 gap-2">
+          <ToolButton
+            isActive={tool === "select"}
+            onClick={() => setTool("select")}
+            icon={() => <div className="w-4 h-4 border border-current" />}
+            label="Select"
+          />
+          <ToolButton isActive={tool === "text"} onClick={() => setTool("text")} icon={Type} label="Text" />
+          <ToolButton isActive={false} onClick={() => fileInputRef.current?.click()} icon={ImageIcon} label="Image" />
+          <ToolButton isActive={false} onClick={() => addShape("rectangle")} icon={Square} label="Shape" />
+        </div>
+
+        {/* Canvas Area */}
+        <div className="flex-1 flex flex-col overflow-hidden">
+          {/* Mobile Toolbar */}
+          <div className="lg:hidden bg-white border-b border-gray-200 p-2">
+            <div className="flex gap-2 overflow-x-auto">
+              <ToolButton isActive={tool === "select"} onClick={() => setTool("select")} icon={Move} label="Select" />
+              <ToolButton isActive={tool === "text"} onClick={() => setTool("text")} icon={Type} label="Text" />
+              <ToolButton
+                isActive={false}
                 onClick={() => fileInputRef.current?.click()}
-              >
-                <Upload className="h-4 w-4 mr-2" />
-                Upload Image
-              </Button>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="outline" size="sm" className="w-full justify-start bg-transparent">
-                    <Square className="h-4 w-4 mr-2" />
-                    Add Shape
-                    <ChevronDown className="h-4 w-4 ml-auto" />
+                icon={ImageIcon}
+                label="Image"
+              />
+              <ToolButton isActive={false} onClick={() => addShape("rectangle")} icon={Square} label="Shape" />
+
+              {/* Mobile Menu Button */}
+              <Sheet open={showMobileMenu} onOpenChange={setShowMobileMenu}>
+                <SheetTrigger asChild>
+                  <Button variant="outline" size="sm" className="flex-shrink-0 bg-transparent">
+                    <Plus className="h-4 w-4" />
+                    <span className="ml-2">More</span>
                   </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="start" className="w-48">
-                  {shapes.map((shape) => (
-                    <DropdownMenuItem key={shape.type} onClick={() => addShape(shape.type)} className="cursor-pointer">
-                      <shape.icon className="mr-2 h-4 w-4" />
-                      {shape.name}
-                    </DropdownMenuItem>
-                  ))}
-                </DropdownMenuContent>
-              </DropdownMenu>
-              <Button variant="outline" size="sm" onClick={addBorder} className="w-full justify-start bg-transparent">
-                <Circle className="h-4 w-4 mr-2" />
-                Add Border
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                className="w-full justify-start bg-transparent"
-                onClick={() => setTool("text")}
-              >
-                <Type className="h-4 w-4 mr-2" />
-                Add Text Block
-              </Button>
+                </SheetTrigger>
+                <SheetContent side="bottom" className="h-[80vh]">
+                  <SheetHeader>
+                    <SheetTitle>Tools & Properties</SheetTitle>
+                  </SheetHeader>
+                  <Tabs value={activeTab} onValueChange={setActiveTab} className="mt-4">
+                    <TabsList className="grid w-full grid-cols-2">
+                      <TabsTrigger value="tools">Tools</TabsTrigger>
+                      <TabsTrigger value="properties">Properties</TabsTrigger>
+                    </TabsList>
+                    <TabsContent value="tools" className="mt-4">
+                      <ScrollArea className="h-[60vh]">
+                        <div className="space-y-2">
+                          <Button
+                            variant="outline"
+                            className="w-full justify-start bg-transparent"
+                            onClick={() => {
+                              fileInputRef.current?.click()
+                              setShowMobileMenu(false)
+                            }}
+                          >
+                            <Upload className="h-4 w-4 mr-2" />
+                            Upload Image
+                          </Button>
+
+                          <div className="space-y-2">
+                            <Label>Add Shapes</Label>
+                            <div className="grid grid-cols-2 gap-2">
+                              {shapes.map((shape) => (
+                                <Button
+                                  key={shape.type}
+                                  variant="outline"
+                                  onClick={() => addShape(shape.type)}
+                                  className="justify-start"
+                                >
+                                  <shape.icon className="mr-2 h-4 w-4" />
+                                  {shape.name}
+                                </Button>
+                              ))}
+                            </div>
+                          </div>
+
+                          <Button variant="outline" onClick={addBorder} className="w-full justify-start bg-transparent">
+                            <Circle className="h-4 w-4 mr-2" />
+                            Add Border
+                          </Button>
+                        </div>
+                      </ScrollArea>
+                    </TabsContent>
+                    <TabsContent value="properties" className="mt-4">
+                      <ScrollArea className="h-[60vh]">
+                        <PropertiesPanel />
+                      </ScrollArea>
+                    </TabsContent>
+                  </Tabs>
+                </SheetContent>
+              </Sheet>
+            </div>
+          </div>
+
+          {/* Canvas Container */}
+          <div className="flex-1 flex overflow-hidden">
+            <div
+              ref={containerRef}
+              className="flex-1 flex items-center justify-center p-2 sm:p-4 overflow-auto bg-gray-100"
+            >
+              <div className="bg-white rounded-lg shadow-lg p-2 sm:p-4">
+                <canvas
+                  ref={canvasRef}
+                  width={canvasSize.width}
+                  height={canvasSize.height}
+                  onPointerDown={handleCanvasPointerDown}
+                  onPointerMove={handleCanvasPointerMove}
+                  onPointerUp={handleCanvasPointerUp}
+                  onPointerLeave={handleCanvasPointerUp}
+                  onTouchStart={handleCanvasTouchStart}
+                  onTouchMove={handleCanvasTouchMove}
+                  onTouchEnd={handleCanvasTouchEnd}
+                  className="border border-gray-300 cursor-crosshair touch-none max-w-full max-h-full"
+                  style={{
+                    cursor: isDragging ? "grabbing" : tool === "select" ? "grab" : "crosshair",
+                    touchAction: "none",
+                    transform: `scale(${canvasScale})`,
+                    transformOrigin: "center center",
+                  }}
+                />
+              </div>
+            </div>
+
+            {/* Desktop Properties Panel */}
+            <div className="hidden lg:block w-80 bg-white border-l border-gray-200">
+              <div className="p-4 border-b border-gray-200">
+                <h3 className="text-lg font-semibold">Properties</h3>
+              </div>
+              <ScrollArea className="h-[calc(100vh-200px)]">
+                <div className="p-4">
+                  <PropertiesPanel />
+
+                  <Separator className="my-6" />
+
+                  <div>
+                    <h4 className="font-medium mb-3">Quick Actions</h4>
+                    <div className="space-y-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="w-full justify-start bg-transparent"
+                        onClick={() => fileInputRef.current?.click()}
+                      >
+                        <Upload className="h-4 w-4 mr-2" />
+                        Upload Image
+                      </Button>
+
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="outline" size="sm" className="w-full justify-start bg-transparent">
+                            <Square className="h-4 w-4 mr-2" />
+                            Add Shape
+                            <ChevronDown className="h-4 w-4 ml-auto" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="start" className="w-48">
+                          {shapes.map((shape) => (
+                            <DropdownMenuItem
+                              key={shape.type}
+                              onClick={() => addShape(shape.type)}
+                              className="cursor-pointer"
+                            >
+                              <shape.icon className="mr-2 h-4 w-4" />
+                              {shape.name}
+                            </DropdownMenuItem>
+                          ))}
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={addBorder}
+                        className="w-full justify-start bg-transparent"
+                      >
+                        <Circle className="h-4 w-4 mr-2" />
+                        Add Border
+                      </Button>
+
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="w-full justify-start bg-transparent"
+                        onClick={() => setTool("text")}
+                      >
+                        <Type className="h-4 w-4 mr-2" />
+                        Add Text Block
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              </ScrollArea>
             </div>
           </div>
         </div>
       </div>
+
+      {/* Hidden file input */}
+      <input ref={fileInputRef} type="file" accept="image/*" onChange={handleImageUpload} className="hidden" />
     </div>
   )
 }

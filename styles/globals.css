@@ -92,3 +92,127 @@ body {
     @apply bg-background text-foreground;
   }
 }
+
+/* Enhanced responsive design */
+@layer utilities {
+  .xs\:inline {
+    @media (min-width: 475px) {
+      display: inline;
+    }
+  }
+}
+
+/* Mobile-first responsive improvements */
+@media (max-width: 1024px) {
+  /* Tablet and mobile optimizations */
+  .canvas-container {
+    padding: 0.5rem;
+  }
+
+  /* Better touch targets */
+  button {
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  /* Improved scrolling */
+  .mobile-scroll {
+    -webkit-overflow-scrolling: touch;
+    overflow-scrolling: touch;
+  }
+}
+
+@media (max-width: 768px) {
+  /* Mobile-specific optimizations */
+  * {
+    touch-action: manipulation;
+  }
+
+  /* Prevent text selection during drag */
+  .canvas-container {
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+  }
+
+  /* Better button spacing on mobile */
+  .mobile-toolbar {
+    gap: 0.25rem;
+    padding: 0.5rem;
+  }
+
+  /* Improved canvas scaling */
+  canvas {
+    max-width: calc(100vw - 2rem);
+    max-height: calc(100vh - 200px);
+    height: auto;
+    width: auto;
+  }
+}
+
+@media (max-width: 640px) {
+  /* Small mobile optimizations */
+  .mobile-header {
+    padding: 0.5rem;
+  }
+
+  .mobile-header h1 {
+    font-size: 0.875rem;
+  }
+
+  /* Compact toolbar */
+  .mobile-toolbar button {
+    padding: 0.5rem;
+    font-size: 0.875rem;
+  }
+
+  /* Better sheet sizing */
+  .mobile-sheet {
+    height: 85vh;
+  }
+}
+
+/* Canvas specific mobile styles */
+canvas {
+  /* Prevent context menu on long press */
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  -khtml-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+
+  /* Smooth scaling */
+  image-rendering: -webkit-optimize-contrast;
+  image-rendering: crisp-edges;
+}
+
+/* Improved focus states for accessibility */
+@media (prefers-reduced-motion: no-preference) {
+  .focus-ring {
+    transition: all 0.2s ease-in-out;
+  }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .canvas-border {
+    border-width: 3px;
+  }
+
+  button {
+    border-width: 2px;
+  }
+}
+
+/* Landscape mobile optimizations */
+@media (max-width: 768px) and (orientation: landscape) {
+  .mobile-sheet {
+    height: 90vh;
+  }
+
+  .canvas-container {
+    padding: 0.25rem;
+  }
+}
