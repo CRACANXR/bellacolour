@@ -2,32 +2,38 @@
 
 import { useState } from "react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { LoginForm } from "./login-form"
-import { RegisterForm } from "./register-form"
+import { LoginForm } from "@/components/auth/login-form"
+import { RegisterForm } from "@/components/auth/register-form"
 
 interface AuthModalProps {
   isOpen: boolean
   onClose: () => void
-  defaultMode?: "login" | "register"
+  onSuccess?: () => void
 }
 
-export function AuthModal({ isOpen, onClose, defaultMode = "login" }: AuthModalProps) {
-  const [mode, setMode] = useState<"login" | "register">(defaultMode)
+export function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
+  const [mode, setMode] = useState<"login" | "register">("login")
 
   const handleSuccess = () => {
     onClose()
+    onSuccess?.()
+  }
+
+  const handleSwitchMode = () => {
+    setMode(mode === "login" ? "register" : "login")
   }
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle>{mode === "login" ? "Hesabınıza Giriş Yapın" : "Yeni Hesap Oluşturun"}</DialogTitle>
+          <DialogTitle>{mode === "login" ? "Giriş Yap" : "Kayıt Ol"}</DialogTitle>
         </DialogHeader>
+
         {mode === "login" ? (
-          <LoginForm onSuccess={handleSuccess} onSwitchToRegister={() => setMode("register")} />
+          <LoginForm onSuccess={handleSuccess} onSwitchToRegister={handleSwitchMode} />
         ) : (
-          <RegisterForm onSuccess={handleSuccess} onSwitchToLogin={() => setMode("login")} />
+          <RegisterForm onSuccess={handleSuccess} onSwitchToLogin={handleSwitchMode} />
         )}
       </DialogContent>
     </Dialog>

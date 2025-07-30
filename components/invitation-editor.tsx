@@ -46,6 +46,10 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { saveProject, updateProject, trackEvent } from "@/lib/api-service"
 import { useAuth } from "@/contexts/auth-context"
 import { useToast } from "@/hooks/use-toast"
+import { ProductConfigurator } from "@/components/shopping/product-configurator"
+import { ShoppingCartComponent } from "@/components/shopping/shopping-cart"
+import { CheckoutModal } from "@/components/shopping/checkout-modal"
+import type { CartItem, CheckoutData } from "@/lib/shopping-types"
 
 interface TemplateElement {
   type: string
@@ -101,6 +105,10 @@ export function InvitationEditor({ template, onBack }: InvitationEditorProps) {
   const [showMobileMenu, setShowMobileMenu] = useState(false)
   const [activeTab, setActiveTab] = useState("tools")
 
+  // Shopping system state
+  const [cartItems, setCartItems] = useState<CartItem[]>([])
+  const [showCheckout, setShowCheckout] = useState(false)
+
   const { user } = useAuth()
   const { toast } = useToast()
   const [isSaving, setIsSaving] = useState(false)
@@ -111,26 +119,18 @@ export function InvitationEditor({ template, onBack }: InvitationEditorProps) {
     const updateCanvasSize = () => {
       if (containerRef.current) {
         const container = containerRef.current
-        const containerWidth = container.clientWidth - 32 // padding
+        const containerWidth = container.clientWidth - 32
         const containerHeight = container.clientHeight - 32
 
-        // Base canvas dimensions
         const baseWidth = 400
         const baseHeight = 600
-        const aspectRatio = baseWidth / baseHeight
 
-        let newWidth = baseWidth
-        let newHeight = baseHeight
         let scale = 1
 
-        // Calculate scale to fit container
         if (containerWidth < baseWidth || containerHeight < baseHeight) {
           const scaleX = containerWidth / baseWidth
           const scaleY = containerHeight / baseHeight
           scale = Math.min(scaleX, scaleY, 1)
-
-          newWidth = baseWidth * scale
-          newHeight = baseHeight * scale
         }
 
         setCanvasSize({ width: baseWidth, height: baseHeight })
@@ -146,6 +146,104 @@ export function InvitationEditor({ template, onBack }: InvitationEditorProps) {
   useEffect(() => {
     drawCanvas()
   }, [elements, selectedElement, loadedImages, canvasSize])
+
+  // Shopping system handlers
+  const handleAddToCart = (item: CartItem) => {
+    if (!user) {
+      toast({
+        title: "Giriş Gerekli",
+        description: "Sepete ürün eklemek için giriş yapmanız gerekiyor.",
+        variant: "destructive",
+      })
+      return
+    }
+
+    setCartItems((prev) => [...prev, item])
+
+    trackEvent({
+      event: "product_added_to_cart",
+      userId: user.id,
+      data: {
+        productType: item.type,
+        quantity: item.quantity,
+        price: item.price,
+        templateId: template.id,
+      },
+    })
+  }
+
+  const handleDirectPurchase = (item: CartItem) => {
+    if (!user) {
+      toast({
+        title: "Giriş Gerekli",
+        description: "Satın alma işlemi için giriş yapmanız gerekiyor.",
+        variant: "destructive",
+      })
+      return
+    }
+
+    setCartItems([item])
+    setShowCheckout(true)
+
+    trackEvent({
+      event: "direct_purchase_initiated",
+      userId: user.id,
+      data: {
+        productType: item.type,
+        quantity: item.quantity,
+        price: item.price,
+        templateId: template.id,
+      },
+    })
+  }
+
+  const handleUpdateCartQuantity = (itemId: string, quantity: number) => {
+    setCartItems((prev) => prev.map((item) => (item.id === itemId ? { ...item, quantity } : item)))
+  }
+
+  const handleRemoveFromCart = (itemId: string) => {
+    setCartItems((prev) => prev.filter((item) => item.id !== itemId))
+  }
+
+  const handleCheckout = () => {
+    if (!user) {
+      toast({
+        title: "Giriş Gerekli",
+        description: "Satın alma işlemi için giriş yapmanız gerekiyor.",
+        variant: "destructive",
+      })
+      return
+    }
+
+    setShowCheckout(true)
+  }
+
+  const handleOrderComplete = async (orderData: CheckoutData) => {
+    try {
+      // Track successful order
+      await trackEvent({
+        event: "order_completed",
+        userId: user?.id,
+        data: {
+          orderId: orderData.orderId,
+          orderTotal: orderData.orderTotal,
+          itemCount: cartItems.length,
+          templateId: template.id,
+        },
+      })
+
+      // Clear cart after successful order
+      setCartItems([])
+      setShowCheckout(false)
+
+      toast({
+        title: "Sipariş Tamamlandı!",
+        description: "Siparişiniz başarıyla alındı. E-posta ile bilgilendirme yapılacaktır.",
+      })
+    } catch (error) {
+      console.error("Order completion error:", error)
+    }
+  }
 
   const loadImage = (src: string): Promise<HTMLImageElement> => {
     return new Promise((resolve, reject) => {
@@ -370,7 +468,6 @@ export function InvitationEditor({ template, onBack }: InvitationEditorProps) {
     const canvas = canvasRef.current
     if (!canvas) return null
 
-    // Adjust coordinates for canvas scaling
     const adjustedX = x / canvasScale
     const adjustedY = y / canvasScale
 
@@ -1152,10 +1249,27 @@ export function InvitationEditor({ template, onBack }: InvitationEditorProps) {
               <span className="hidden sm:inline ml-2">{isSaving ? "Saving..." : "Save"}</span>
             </Button>
 
-            <Button onClick={exportDesign} size="sm">
+            <Button onClick={exportDesign} size="sm" variant="outline">
               <Download className="h-4 w-4" />
               <span className="hidden sm:inline ml-2">Export</span>
             </Button>
+
+            {/* Shopping Cart */}
+            <ShoppingCartComponent
+              items={user ? cartItems : []}
+              onUpdateQuantity={handleUpdateCartQuantity}
+              onRemoveItem={handleRemoveFromCart}
+              onCheckout={handleCheckout}
+              user={user}
+            />
+
+            {/* Product Configurator */}
+            <ProductConfigurator
+              templateName={template.name}
+              onAddToCart={handleAddToCart}
+              onDirectPurchase={handleDirectPurchase}
+              user={user}
+            />
           </div>
         </div>
       </div>
@@ -1361,6 +1475,14 @@ export function InvitationEditor({ template, onBack }: InvitationEditorProps) {
 
       {/* Hidden file input */}
       <input ref={fileInputRef} type="file" accept="image/*" onChange={handleImageUpload} className="hidden" />
+
+      {/* Checkout Modal */}
+      <CheckoutModal
+        isOpen={showCheckout}
+        onClose={() => setShowCheckout(false)}
+        items={cartItems}
+        onOrderComplete={handleOrderComplete}
+      />
     </div>
   )
 }

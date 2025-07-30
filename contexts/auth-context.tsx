@@ -16,6 +16,7 @@ export interface User {
 interface AuthContextType {
   user: User | null
   isAuthenticated: boolean
+  isLoading: boolean
   login: (email: string, password: string) => Promise<boolean>
   register: (email: string, password: string, name: string) => Promise<boolean>
   logout: () => void
@@ -33,7 +34,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const savedUser = localStorage.getItem("wedding_app_user")
     if (savedUser) {
       try {
-        setUser(JSON.parse(savedUser))
+        const parsedUser = JSON.parse(savedUser)
+        setUser(parsedUser)
       } catch (error) {
         console.error("Error parsing saved user:", error)
         localStorage.removeItem("wedding_app_user")
@@ -58,11 +60,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       localStorage.setItem("wedding_app_user", JSON.stringify(userData))
 
       // Track login event
-      await trackEvent({
-        event: "user_login",
-        userId: userData.id,
-        data: { email: userData.email, role: userData.role },
-      })
+      try {
+        await trackEvent({
+          event: "user_login",
+          userId: userData.id,
+          data: { email: userData.email, role: userData.role },
+        })
+      } catch (trackError) {
+        console.warn("Failed to track login event:", trackError)
+      }
 
       return true
     } catch (error) {
@@ -88,11 +94,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       localStorage.setItem("wedding_app_user", JSON.stringify(userData))
 
       // Track registration event
-      await trackEvent({
-        event: "user_register",
-        userId: userData.id,
-        data: { email: userData.email, name: userData.name },
-      })
+      try {
+        await trackEvent({
+          event: "user_register",
+          userId: userData.id,
+          data: { email: userData.email, name: userData.name },
+        })
+      } catch (trackError) {
+        console.warn("Failed to track registration event:", trackError)
+      }
 
       return true
     } catch (error) {
@@ -105,13 +115,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       if (user) {
         // Track logout event
-        await trackEvent({
-          event: "user_logout",
-          userId: user.id,
-        })
+        try {
+          await trackEvent({
+            event: "user_logout",
+            userId: user.id,
+          })
+        } catch (trackError) {
+          console.warn("Failed to track logout event:", trackError)
+        }
 
         // Call backend logout
-        await logoutUser()
+        try {
+          await logoutUser()
+        } catch (logoutError) {
+          console.warn("Backend logout failed:", logoutError)
+        }
       }
     } catch (error) {
       console.error("Logout error:", error)
@@ -145,6 +163,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       value={{
         user,
         isAuthenticated: !!user,
+        isLoading,
         login,
         register,
         logout,
