@@ -2,9 +2,11 @@
 
 import SaveTheDateNotificator from "@/components/save-the-date-notificator"
 import { Button } from "@/components/ui/button"
-import { ArrowLeft, Loader2 } from "lucide-react"
+import { ArrowLeft, Loader2, Share2 } from "lucide-react"
 import { useRouter, useParams } from "next/navigation"
 import { useEffect, useState } from "react"
+import { getProjectById, trackEvent } from "@/lib/api-service"
+import { useToast } from "@/hooks/use-toast"
 
 interface SaveTheDateData {
   id: string
@@ -22,20 +24,25 @@ export default function SaveTheDatePersistentPage() {
   const [data, setData] = useState<SaveTheDateData | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const { toast } = useToast()
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await fetch(`/api/save-the-date/${params.id}`)
-        const result = await response.json()
+        const result = await getProjectById(params.id as string)
 
-        if (result.success) {
-          setData(result.data)
+        if (result.success && result.data && result.data.type === "save-the-date") {
+          setData(result.data as SaveTheDateData)
+          await trackEvent({
+            event: "save_the_date_link_viewed",
+            data: { projectId: params.id },
+          })
         } else {
-          setError(result.error || "Link not found")
+          setError(result.error || "Link not found or is not a save-the-date project.")
         }
       } catch (err) {
-        setError("Failed to load data")
+        console.error("Failed to load save the date data:", err)
+        setError("Failed to load data. Please try again later.")
       } finally {
         setLoading(false)
       }
@@ -45,6 +52,15 @@ export default function SaveTheDatePersistentPage() {
       fetchData()
     }
   }, [params.id])
+
+  const handleShareLink = () => {
+    const shareUrl = window.location.href
+    navigator.clipboard.writeText(shareUrl)
+    toast({
+      title: "Bağlantı Kopyalandı!",
+      description: "Geri sayım bağlantısı panoya kopyalandı.",
+    })
+  }
 
   if (loading) {
     return (
@@ -60,7 +76,7 @@ export default function SaveTheDatePersistentPage() {
       <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-rose-50 to-pink-50 p-4 text-center">
         <h1 className="text-3xl font-bold text-gray-900 mb-4">Bağlantı Bulunamadı</h1>
         <p className="text-lg text-gray-600 mb-8">Bu bağlantı geçersiz veya süresi dolmuş olabilir.</p>
-        <Button onClick={() => router.push("/save-the-date")}>
+        <Button onClick={() => router.push("/save-the-date/countdown")}>
           <ArrowLeft className="h-4 w-4 mr-2" />
           Yeni Bağlantı Oluştur
         </Button>
@@ -86,11 +102,19 @@ export default function SaveTheDatePersistentPage() {
           <div className="flex justify-center mb-8">
             <Button
               variant="ghost"
-              onClick={() => router.push("/save-the-date")}
+              onClick={() => router.push("/save-the-date/countdown")}
               className="mr-4 text-gray-700 hover:text-rose-600"
             >
               <ArrowLeft className="h-4 w-4 mr-2" />
               Geri Sayım Oluşturucuya Dön
+            </Button>
+            <Button
+              variant="outline"
+              onClick={handleShareLink}
+              className="text-gray-700 hover:text-rose-600 bg-transparent"
+            >
+              <Share2 className="h-4 w-4 mr-2" />
+              Bağlantıyı Paylaş
             </Button>
           </div>
           <div className="bg-white p-8 rounded-lg shadow-xl max-w-lg mx-auto">

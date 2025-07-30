@@ -1,14 +1,17 @@
+export type ProductType = "digital" | "printed"
+export type PaperType = "standard" | "premium_matte" | "premium_glossy" | "luxury_textured" | "pearl"
+export type FinishingType = "none" | "uv_coating" | "gold_foil" | "silver_foil" | "embossing"
+
 export interface CartItem {
   id: string
   title: string
-  type: "digital" | "printed"
+  type: ProductType
   quantity: number
-  price: number
+  price: number // Price per unit for printed, total for digital
   dimensions?: string
-  paperType?: string
-  finishing?: string
+  paperType?: PaperType
+  finishing?: FinishingType
   urgentDelivery?: boolean
-  templateId?: string
 }
 
 export interface ShippingAddress {
@@ -50,26 +53,11 @@ export interface Order {
 }
 
 export interface CheckoutData {
-  customerInfo: {
-    firstName: string
-    lastName: string
-    email: string
-    phone: string
-  }
-  shippingAddress: {
-    address: string
-    city: string
-    district: string
-    postalCode: string
-    country: string
-  }
-  billingAddress: {
-    address: string
-    city: string
-    district: string
-    postalCode: string
-    country: string
-  }
+  orderId: string
+  orderTotal: number
+  items: CartItem[]
+  shippingAddress: ShippingAddress
+  billingAddress: ShippingAddress
   paymentMethod: string
   paymentDetails: {
     cardNumber: string
@@ -79,7 +67,5 @@ export interface CheckoutData {
   }
   specialInstructions: string
   sameAsBilling: boolean
-  orderId?: string
-  orderTotal?: number
   orderDate?: string
 }

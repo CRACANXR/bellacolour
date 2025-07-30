@@ -114,28 +114,38 @@ export function InvitationEditor({ template, onBack }: InvitationEditorProps) {
   const [isSaving, setIsSaving] = useState(false)
   const [projectId, setProjectId] = useState<string | null>(null)
 
-  // Responsive canvas sizing
+  // Responsive canvas sizing and DPI scaling
   useEffect(() => {
     const updateCanvasSize = () => {
-      if (containerRef.current) {
-        const container = containerRef.current
-        const containerWidth = container.clientWidth - 32
-        const containerHeight = container.clientHeight - 32
+      const canvas = canvasRef.current
+      if (!canvas || !containerRef.current) return
 
-        const baseWidth = 400
-        const baseHeight = 600
+      const container = containerRef.current
+      const containerWidth = container.clientWidth - 32
+      const containerHeight = container.clientHeight - 32
 
-        let scale = 1
+      const baseWidth = 400
+      const baseHeight = 600
+      const devicePixelRatio = window.devicePixelRatio || 1
 
-        if (containerWidth < baseWidth || containerHeight < baseHeight) {
-          const scaleX = containerWidth / baseWidth
-          const scaleY = containerHeight / baseHeight
-          scale = Math.min(scaleX, scaleY, 1)
-        }
+      // Set canvas element's physical dimensions for high DPI
+      canvas.width = baseWidth * devicePixelRatio
+      canvas.height = baseHeight * devicePixelRatio
 
-        setCanvasSize({ width: baseWidth, height: baseHeight })
-        setCanvasScale(scale)
+      // Set canvas element's CSS dimensions to maintain visual size
+      canvas.style.width = `${baseWidth}px`
+      canvas.style.height = `${baseHeight}px`
+
+      // Calculate overall scale for fitting into container
+      let scale = 1
+      if (containerWidth < baseWidth || containerHeight < baseHeight) {
+        const scaleX = containerWidth / baseWidth
+        const scaleY = containerHeight / baseHeight
+        scale = Math.min(scaleX, scaleY, 1)
       }
+
+      setCanvasSize({ width: baseWidth, height: baseHeight })
+      setCanvasScale(scale)
     }
 
     updateCanvasSize()
@@ -365,12 +375,20 @@ export function InvitationEditor({ template, onBack }: InvitationEditorProps) {
     const ctx = canvas.getContext("2d")
     if (!ctx) return
 
+    const devicePixelRatio = window.devicePixelRatio || 1
+
+    // Clear canvas and apply DPI scaling
+    ctx.clearRect(0, 0, canvas.width, canvas.height)
+    ctx.save()
+    ctx.scale(devicePixelRatio, devicePixelRatio)
+
+    // Draw background and border
     ctx.fillStyle = "#ffffff"
-    ctx.fillRect(0, 0, canvas.width, canvas.height)
+    ctx.fillRect(0, 0, canvasSize.width, canvasSize.height)
 
     ctx.strokeStyle = "#e5e7eb"
     ctx.lineWidth = 2
-    ctx.strokeRect(0, 0, canvas.width, canvas.height)
+    ctx.strokeRect(0, 0, canvasSize.width, canvasSize.height)
 
     elements.forEach((element) => {
       if (element.type === "text") {
@@ -462,17 +480,15 @@ export function InvitationEditor({ template, onBack }: InvitationEditorProps) {
         ctx.setLineDash([])
       }
     })
+    ctx.restore() // Restore after all drawing
   }
 
   const getElementAtPosition = (x: number, y: number): TemplateElement | null => {
     const canvas = canvasRef.current
     if (!canvas) return null
 
-    const adjustedX = x / canvasScale
-    const adjustedY = y / canvasScale
-
-    const isMobile = window.innerWidth < 768
-    const touchPadding = isMobile ? 20 : 8
+    // x and y are already in logical canvas coordinates
+    const touchPadding = 8 // Padding in logical canvas units
 
     for (let i = elements.length - 1; i >= 0; i--) {
       const element = elements[i]
@@ -484,10 +500,10 @@ export function InvitationEditor({ template, onBack }: InvitationEditorProps) {
         const metrics = ctx.measureText(element.content)
 
         if (
-          adjustedX >= element.x - metrics.width / 2 - touchPadding &&
-          adjustedX <= element.x + metrics.width / 2 + touchPadding &&
-          adjustedY >= element.y - (element.fontSize || 16) - touchPadding &&
-          adjustedY <= element.y + touchPadding
+          x >= element.x - metrics.width / 2 - touchPadding &&
+          x <= element.x + metrics.width / 2 + touchPadding &&
+          y >= element.y - (element.fontSize || 16) - touchPadding &&
+          y <= element.y + touchPadding
         ) {
           return element
         }
@@ -496,10 +512,10 @@ export function InvitationEditor({ template, onBack }: InvitationEditorProps) {
         const height = element.height || 100
 
         if (
-          adjustedX >= element.x - width / 2 - touchPadding &&
-          adjustedX <= element.x + width / 2 + touchPadding &&
-          adjustedY >= element.y - height / 2 - touchPadding &&
-          adjustedY <= element.y + height / 2 + touchPadding
+          x >= element.x - width / 2 - touchPadding &&
+          x <= element.x + width / 2 + touchPadding &&
+          y >= element.y - height / 2 - touchPadding &&
+          y <= element.y + height / 2 + touchPadding
         ) {
           return element
         }
@@ -513,6 +529,7 @@ export function InvitationEditor({ template, onBack }: InvitationEditorProps) {
     if (!canvas) return { x: 0, y: 0 }
 
     const rect = canvas.getBoundingClientRect()
+    // Return coordinates relative to the logical canvas size
     return {
       x: (clientX - rect.left) / canvasScale,
       y: (clientY - rect.top) / canvasScale,
@@ -522,7 +539,7 @@ export function InvitationEditor({ template, onBack }: InvitationEditorProps) {
   const handleCanvasPointerDown = (event: React.PointerEvent<HTMLCanvasElement>) => {
     event.preventDefault()
     const { x, y } = getCanvasCoordinates(event.clientX, event.clientY)
-    const clickedElement = getElementAtPosition(x * canvasScale, y * canvasScale)
+    const clickedElement = getElementAtPosition(x, y)
 
     if (tool === "select" && clickedElement) {
       setSelectedElement(clickedElement)
@@ -531,6 +548,9 @@ export function InvitationEditor({ template, onBack }: InvitationEditorProps) {
         x: x - clickedElement.x,
         y: y - clickedElement.y,
       })
+      if ("vibrate" in navigator) {
+        navigator.vibrate(10) // Short haptic feedback on element selection/drag start
+      }
     } else if (tool === "text" && !clickedElement) {
       const newElement: TemplateElement = {
         id: `element-${Date.now()}`,
@@ -559,6 +579,9 @@ export function InvitationEditor({ template, onBack }: InvitationEditorProps) {
     const newY = y - dragOffset.y
 
     updateSelectedElement({ x: newX, y: newY })
+    if ("vibrate" in navigator) {
+      navigator.vibrate(1) // Very short haptic feedback during drag
+    }
   }
 
   const handleCanvasPointerUp = (event: React.PointerEvent<HTMLCanvasElement>) => {
@@ -571,7 +594,7 @@ export function InvitationEditor({ template, onBack }: InvitationEditorProps) {
     event.preventDefault()
     const touch = event.touches[0]
     const { x, y } = getCanvasCoordinates(touch.clientX, touch.clientY)
-    const clickedElement = getElementAtPosition(x * canvasScale, y * canvasScale)
+    const clickedElement = getElementAtPosition(x, y)
 
     if (tool === "select" && clickedElement) {
       setSelectedElement(clickedElement)
@@ -580,6 +603,9 @@ export function InvitationEditor({ template, onBack }: InvitationEditorProps) {
         x: x - clickedElement.x,
         y: y - clickedElement.y,
       })
+      if ("vibrate" in navigator) {
+        navigator.vibrate(10) // Short haptic feedback on element selection/drag start
+      }
     } else if (tool === "text" && !clickedElement) {
       const newElement: TemplateElement = {
         id: `element-${Date.now()}`,
@@ -609,6 +635,9 @@ export function InvitationEditor({ template, onBack }: InvitationEditorProps) {
     const newY = y - dragOffset.y
 
     updateSelectedElement({ x: newX, y: newY })
+    if ("vibrate" in navigator) {
+      navigator.vibrate(1) // Very short haptic feedback during drag
+    }
   }
 
   const handleCanvasTouchEnd = (event: React.TouchEvent<HTMLCanvasElement>) => {
@@ -651,10 +680,6 @@ export function InvitationEditor({ template, onBack }: InvitationEditorProps) {
     const updatedElement = { ...selectedElement, ...updates }
     setElements(elements.map((el) => (el.id === selectedElement.id ? updatedElement : el)))
     setSelectedElement(updatedElement)
-
-    if ("vibrate" in navigator && isDragging) {
-      navigator.vibrate(10)
-    }
   }
 
   const deleteSelectedElement = () => {
