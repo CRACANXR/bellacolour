@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -191,6 +191,30 @@ const templates = [
 ]
 
 export default function App() {
+  // Platform detection for iOS
+  const [isIOS, setIsIOS] = useState(false);
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const ua = window.navigator.userAgent;
+      setIsIOS(/iPad|iPhone|iPod/.test(ua));
+    }
+    if (typeof window !== 'undefined' && !window.customElements.get('model-viewer')) {
+      const script = document.createElement('script');
+      script.type = 'module';
+      script.src = 'https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js';
+      document.head.appendChild(script);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined' && !window.customElements.get('model-viewer')) {
+      const script = document.createElement('script');
+      script.type = 'module';
+      script.src = 'https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js';
+      document.head.appendChild(script);
+    }
+  }, []);
+
   const [currentView, setCurrentView] = useState<"homepage" | "templates" | "editor">("homepage")
   const [selectedTemplate, setSelectedTemplate] = useState<(typeof templates)[0] | null>(null)
 
@@ -294,9 +318,108 @@ export default function App() {
         <p className="text-center text-gray-600 mb-8">
           Davetiyenizi Three.js destekli Artırılmış Gerçeklik ile deneyimleyin!
         </p>
-        <div className="flex justify-center">
-          <div className="w-full max-w-2xl h-[400px] bg-gray-100 rounded-lg shadow-lg flex items-center justify-center">
-            <ARShowcase />
+        {/* AR Display Segments */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
+          <div className="flex flex-col items-center p-6 bg-white rounded-lg shadow-md">
+            <span className="text-rose-500 mb-2">
+              <Sparkles className="w-8 h-8" />
+            </span>
+            <h3 className="text-xl font-semibold mb-2">Gerçek Zamanlı Önizleme</h3>
+            <p className="text-gray-600 text-center">Tasarladığınız davetiyeyi anında AR ortamında görüntüleyin ve değişiklikleri canlı olarak izleyin.</p>
+          </div>
+          <div className="flex flex-col items-center p-6 bg-white rounded-lg shadow-md">
+            <span className="text-rose-500 mb-2">
+              <Heart className="w-8 h-8" />
+            </span>
+            <h3 className="text-xl font-semibold mb-2">Kişiselleştirilmiş Deneyim</h3>
+            <p className="text-gray-600 text-center">Davetiyenizi kendi renkleriniz, yazı tipleriniz ve içeriklerinizle özelleştirerek benzersiz bir deneyim yaşayın.</p>
+          </div>
+          <div className="flex flex-col items-center p-6 bg-white rounded-lg shadow-md">
+            <span className="text-rose-500 mb-2">
+              <Flower className="w-8 h-8" />
+            </span>
+            <h3 className="text-xl font-semibold mb-2">Kolay Paylaşım</h3>
+            <p className="text-gray-600 text-center">AR davetiyenizi QR kod veya bağlantı ile kolayca sevdiklerinizle paylaşın.</p>
+          </div>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 justify-center">
+          {/* AR Display Window 1 */}
+          <div className="bg-gray-100 rounded-lg shadow-lg flex items-center justify-center p-4">
+            {isIOS ? (
+              <model-viewer
+                src="/ar-assets/AR-Code-Object-Capture-app-1735541303 2.usdz"
+                alt="kapaklı"
+                ar
+                ar-modes="quick-look"
+                camera-controls
+                auto-rotate
+                style={{ width: '100%', height: '350px', background: 'white', borderRadius: '0.5rem' }}
+                exposure="1"
+              ></model-viewer>
+            ) : (
+              <model-viewer
+                src="/ar-assets/kapaklı.glb"
+                alt="kapaklı"
+                ar
+                ar-modes="webxr scene-viewer"
+                camera-controls
+                auto-rotate
+                style={{ width: '100%', height: '350px', background: 'white', borderRadius: '0.5rem' }}
+                exposure="1"
+              ></model-viewer>
+            )}
+          </div>
+          {/* AR Display Window 2 */}
+          <div className="bg-gray-100 rounded-lg shadow-lg flex items-center justify-center p-4">
+            {isIOS ? (
+              <model-viewer
+                src="/ar-assets/AR-Code-Object-Capture-app-1735827577.usdz"
+                alt="kapaklı2"
+                ar
+                ar-modes="quick-look"
+                camera-controls
+                auto-rotate
+                style={{ width: '100%', height: '350px', background: 'white', borderRadius: '0.5rem' }}
+                exposure="1"
+              ></model-viewer>
+            ) : (
+              <model-viewer
+                src="/ar-assets/kapaklı2.glb"
+                alt="kapaklı2"
+                ar
+                ar-modes="webxr scene-viewer"
+                camera-controls
+                auto-rotate
+                style={{ width: '100%', height: '350px', background: 'white', borderRadius: '0.5rem' }}
+                exposure="1"
+              ></model-viewer>
+            )}
+          </div>
+          {/* AR Display Window 3 */}
+          <div className="bg-gray-100 rounded-lg shadow-lg flex items-center justify-center p-4">
+            {isIOS ? (
+              <model-viewer
+                src="/ar-assets/AR-Code-Object-Capture-app-1739970952.usdz"
+                alt="kapaklı3"
+                ar
+                ar-modes="quick-look"
+                camera-controls
+                auto-rotate
+                style={{ width: '100%', height: '350px', background: 'white', borderRadius: '0.5rem' }}
+                exposure="1"
+              ></model-viewer>
+            ) : (
+              <model-viewer
+                src="/ar-assets/kapaklı3.glb"
+                alt="kapaklı3"
+                ar
+                ar-modes="webxr scene-viewer"
+                camera-controls
+                auto-rotate
+                style={{ width: '100%', height: '350px', background: 'white', borderRadius: '0.5rem' }}
+                exposure="1"
+              ></model-viewer>
+            )}
           </div>
         </div>
       </section>
