@@ -1,319 +1,186 @@
-// API configuration
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "https://your-backend-api.com/api"
-
-// Mock data for development/demo purposes
-const MOCK_DATA = {
-  users: [
-    { id: "1", email: "admin@bellacolor.com", name: "Admin User", role: "admin" as const },
-    { id: "2", email: "test@admin.com", name: "Test Admin", role: "admin" as const },
-    { id: "3", email: "user@example.com", name: "Demo User", role: "user" as const },
-  ],
-  projects: [],
-  saveTheDates: [],
+// Mock database for projects
+interface MockProject {
+  id: string
+  title: string
+  type: "invitation" | "save-the-date"
+  templateId: string
+  elements: any[] // Simplified for mock
+  userId: string
+  createdAt: string
+  lastModified: string
+  // Specific fields for save-the-date
+  wedding_date?: string
+  partner1_name?: string
+  partner2_name?: string
+  expires_at?: string
+  view_count?: number
 }
 
-// Check if we're in development or if API is not available
-const isDevelopment = process.env.NODE_ENV === "development" || !process.env.NEXT_PUBLIC_API_URL
+const MOCK_PROJECTS: MockProject[] = [
+  {
+    id: "proj_mock_1",
+    title: "Sarah & Michael Düğün Davetiyesi",
+    type: "invitation",
+    templateId: "classic-elegant",
+    elements: [],
+    userId: "user1",
+    createdAt: "2023-01-01T10:00:00Z",
+    lastModified: "2023-01-01T10:00:00Z",
+  },
+  {
+    id: "proj_mock_2",
+    title: "Emma & James Save the Date",
+    type: "save-the-date",
+    templateId: "modern-minimal",
+    elements: [],
+    userId: "user1",
+    wedding_date: "2025-12-25",
+    partner1_name: "Emma",
+    partner2_name: "James",
+    expires_at: "2026-12-25T00:00:00Z",
+    view_count: 150,
+    createdAt: "2024-01-01T10:00:00Z",
+    lastModified: "2024-01-01T10:00:00Z",
+  },
+  {
+    id: "proj_mock_3",
+    title: "Admin Test Davetiyesi",
+    type: "invitation",
+    templateId: "floral-romance",
+    elements: [],
+    userId: "admin1",
+    createdAt: "2023-03-15T10:00:00Z",
+    lastModified: "2023-03-15T10:00:00Z",
+  },
+]
 
-// Generic API request function with fallback
-async function apiRequest(endpoint: string, options: RequestInit = {}) {
-  // If in development or no API URL, use mock data
-  if (isDevelopment) {
-    return handleMockRequest(endpoint, options)
-  }
+// Mock database for analytics events
+interface MockEvent {
+  id: string
+  event: string
+  userId?: string
+  timestamp: string
+  data: any
+}
 
-  const url = `${API_BASE_URL}${endpoint}`
+const MOCK_EVENTS: MockEvent[] = []
 
-  const defaultOptions: RequestInit = {
-    headers: {
-      "Content-Type": "application/json",
-      ...options.headers,
-    },
-    ...options,
+// Simulate API request delay
+const simulateDelay = (ms = 500) => new Promise((resolve) => setTimeout(resolve, ms))
+
+// Simulate API failure for testing purposes
+const SIMULATE_API_FAILURE = false // Set to true to test error handling
+
+async function apiRequest<T>(
+  path: string,
+  method = "GET",
+  body?: any,
+): Promise<{ success: boolean; data?: T; error?: string }> {
+  await simulateDelay()
+
+  if (SIMULATE_API_FAILURE) {
+    console.error(`Simulating API failure for ${method} ${path}`)
+    return { success: false, error: "Simulated network error" }
   }
 
   try {
-    const response = await fetch(url, defaultOptions)
-
-    if (!response.ok) {
-      throw new Error(`API Error: ${response.status} ${response.statusText}`)
-    }
-
-    return await response.json()
-  } catch (error) {
-    console.warn("API Request failed, falling back to mock data:", error)
-    // Fallback to mock data if API fails
-    return handleMockRequest(endpoint, options)
-  }
-}
-
-// Mock request handler
-async function handleMockRequest(endpoint: string, options: RequestInit = {}) {
-  // Simulate network delay
-  await new Promise((resolve) => setTimeout(resolve, 500))
-
-  const method = options.method || "GET"
-  const body = options.body ? JSON.parse(options.body as string) : null
-
-  console.log(`Mock API: ${method} ${endpoint}`, body)
-
-  // Handle different endpoints
-  if (endpoint === "/auth/login") {
-    const { email, password } = body
-    const user = MOCK_DATA.users.find((u) => u.email === email)
-
-    if (user) {
-      return {
-        user: {
-          id: user.id,
-          email: user.email,
-          name: user.name,
-          role: user.role,
-        },
-        token: `mock-token-${user.id}`,
+    // Mock Project API
+    if (path.startsWith("/api/projects")) {
+      if (method === "POST") {
+        const newProject: MockProject = {
+          id: `proj_mock_${MOCK_PROJECTS.length + 1}`,
+          createdAt: new Date().toISOString(),
+          lastModified: new Date().toISOString(),
+          ...body,
+        }
+        MOCK_PROJECTS.push(newProject)
+        return { success: true, data: newProject as T }
+      } else if (method === "PUT") {
+        const index = MOCK_PROJECTS.findIndex((p) => p.id === body.id)
+        if (index !== -1) {
+          MOCK_PROJECTS[index] = { ...MOCK_PROJECTS[index], ...body, lastModified: new Date().toISOString() }
+          return { success: true, data: MOCK_PROJECTS[index] as T }
+        }
+        return { success: false, error: "Project not found" }
+      } else if (method === "GET") {
+        const projectId = path.split("/").pop()
+        if (projectId && projectId !== "projects") {
+          const project = MOCK_PROJECTS.find((p) => p.id === projectId)
+          if (project) {
+            return { success: true, data: project as T }
+          }
+          return { success: false, error: "Project not found" }
+        }
+        return { success: true, data: MOCK_PROJECTS as T }
       }
-    } else {
-      throw new Error("Invalid credentials")
     }
-  }
 
-  if (endpoint === "/auth/register") {
-    const { email, password, name } = body
-    const newUser = {
-      id: `user-${Date.now()}`,
-      email,
-      name,
-      role: "user" as const,
-    }
-    MOCK_DATA.users.push(newUser)
-
-    return {
-      user: newUser,
-      token: `mock-token-${newUser.id}`,
-    }
-  }
-
-  if (endpoint === "/auth/logout") {
-    return { success: true }
-  }
-
-  if (endpoint === "/projects" && method === "POST") {
-    const project = {
-      id: `project-${Date.now()}`,
-      ...body,
-      createdAt: new Date().toISOString(),
-    }
-    MOCK_DATA.projects.push(project)
-    return project
-  }
-
-  if (endpoint.startsWith("/projects/") && method === "PUT") {
-    const projectId = endpoint.split("/")[2]
-    const projectIndex = MOCK_DATA.projects.findIndex((p) => p.id === projectId)
-    if (projectIndex >= 0) {
-      MOCK_DATA.projects[projectIndex] = { ...MOCK_DATA.projects[projectIndex], ...body }
-      return MOCK_DATA.projects[projectIndex]
-    }
-    return { id: projectId, ...body }
-  }
-
-  if (endpoint.startsWith("/projects/") && method === "GET") {
-    const projectId = endpoint.split("/")[2]
-    const project = MOCK_DATA.projects.find((p) => p.id === projectId)
-    return project || { id: projectId, title: "Mock Project", elements: [] }
-  }
-
-  if (endpoint === "/save-the-date" && method === "POST") {
-    const saveTheDate = {
-      id: `std-${Date.now()}`,
-      ...body,
-      createdAt: new Date().toISOString(),
-      shareableUrl: `${window.location.origin}/save-the-date/${Date.now()}`,
-      expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(), // 30 days
-    }
-    MOCK_DATA.saveTheDates.push(saveTheDate)
-    return saveTheDate
-  }
-
-  if (endpoint.startsWith("/save-the-date/") && method === "GET") {
-    const id = endpoint.split("/")[2]
-    const saveTheDate = MOCK_DATA.saveTheDates.find((std) => std.id === id)
-    return (
-      saveTheDate || {
-        id,
-        partner1Name: "Demo Partner 1",
-        partner2Name: "Demo Partner 2",
-        weddingDate: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString(),
+    // Mock Save-the-Date API (uses projects endpoint for data)
+    if (path.startsWith("/api/save-the-date")) {
+      if (method === "GET") {
+        const projectId = path.split("/").pop()
+        if (projectId && projectId !== "save-the-date") {
+          const project = MOCK_PROJECTS.find((p) => p.id === projectId && p.type === "save-the-date")
+          if (project) {
+            // Simulate view count increment
+            project.view_count = (project.view_count || 0) + 1
+            return { success: true, data: project as T }
+          }
+          return { success: false, error: "Save-the-date link not found" }
+        }
       }
-    )
-  }
-
-  if (endpoint === "/analytics/track" && method === "POST") {
-    console.log("Analytics event tracked:", body)
-    return { success: true }
-  }
-
-  if (endpoint === "/admin/stats") {
-    return {
-      totalUsers: MOCK_DATA.users.length,
-      totalProjects: MOCK_DATA.projects.length,
-      totalOrders: 0,
-      revenue: 0,
     }
+
+    // Mock Analytics API
+    if (path === "/api/track-event") {
+      if (method === "POST") {
+        const newEvent: MockEvent = {
+          id: `event_${MOCK_EVENTS.length + 1}`,
+          timestamp: new Date().toISOString(),
+          ...body,
+        }
+        MOCK_EVENTS.push(newEvent)
+        console.log("Tracked event:", newEvent) // Log tracked events
+        return { success: true, data: newEvent as T }
+      }
+    }
+
+    return { success: false, error: "Not Found" }
+  } catch (e: any) {
+    console.error("Mock API error:", e)
+    return { success: false, error: e.message || "An unexpected error occurred" }
   }
+}
 
-  if (endpoint === "/admin/users") {
-    return MOCK_DATA.users
+export const saveProject = async (projectData: Omit<MockProject, "id" | "createdAt" | "lastModified">) => {
+  const response = await apiRequest<MockProject>("/api/projects", "POST", projectData)
+  if (!response.success) {
+    throw new Error(response.error || "Failed to save project")
   }
+  return response.data!
+}
 
-  if (endpoint === "/admin/projects") {
-    return MOCK_DATA.projects
+export const updateProject = async (
+  id: string,
+  projectData: Partial<Omit<MockProject, "id" | "createdAt" | "lastModified">>,
+) => {
+  const response = await apiRequest<MockProject>("/api/projects", "PUT", { id, ...projectData })
+  if (!response.success) {
+    throw new Error(response.error || "Failed to update project")
   }
-
-  // Default response
-  return { success: true, message: "Mock response" }
+  return response.data!
 }
 
-// Save the Date API functions
-export interface SaveTheDateData {
-  partner1Name?: string
-  partner2Name?: string
-  weddingDate: string
-  createdBy?: string
+export async function getProjectById(id: string) {
+  const response = await apiRequest<MockProject>(`/api/projects/${id}`, "GET")
+  return response
 }
 
-export interface SaveTheDateResponse {
-  id: string
-  shareableUrl: string
-  expiresAt: string
-}
-
-export async function createSaveTheDate(data: SaveTheDateData): Promise<SaveTheDateResponse> {
-  return apiRequest("/save-the-date", {
-    method: "POST",
-    body: JSON.stringify(data),
-  })
-}
-
-export async function getSaveTheDate(id: string) {
-  return apiRequest(`/save-the-date/${id}`)
-}
-
-// User/Auth API functions
-export interface UserData {
-  email: string
-  name: string
-  password?: string
-}
-
-export interface LoginResponse {
-  user: {
-    id: string
-    email: string
-    name: string
-    role: "user" | "admin"
+export const trackEvent = async (eventData: Omit<MockEvent, "id" | "timestamp">) => {
+  const response = await apiRequest<MockEvent>("/api/track-event", "POST", eventData)
+  if (!response.success) {
+    console.error("Failed to track event:", response.error)
+    // Do not throw error to avoid breaking UI for analytics failures
   }
-  token?: string
-}
-
-export async function loginUser(email: string, password: string): Promise<LoginResponse> {
-  return apiRequest("/auth/login", {
-    method: "POST",
-    body: JSON.stringify({ email, password }),
-  })
-}
-
-export async function registerUser(userData: UserData): Promise<LoginResponse> {
-  return apiRequest("/auth/register", {
-    method: "POST",
-    body: JSON.stringify(userData),
-  })
-}
-
-export async function logoutUser(): Promise<void> {
-  return apiRequest("/auth/logout", {
-    method: "POST",
-  })
-}
-
-// Project API functions
-export interface ProjectData {
-  title: string
-  type: "invitation" | "save-the-date"
-  templateId?: string
-  elements: any[]
-  userId?: string
-}
-
-export async function saveProject(projectData: ProjectData) {
-  return apiRequest("/projects", {
-    method: "POST",
-    body: JSON.stringify(projectData),
-  })
-}
-
-export async function getProject(id: string) {
-  return apiRequest(`/projects/${id}`)
-}
-
-export async function getUserProjects(userId: string) {
-  return apiRequest(`/users/${userId}/projects`)
-}
-
-export async function updateProject(id: string, projectData: Partial<ProjectData>) {
-  return apiRequest(`/projects/${id}`, {
-    method: "PUT",
-    body: JSON.stringify(projectData),
-  })
-}
-
-export async function deleteProject(id: string) {
-  return apiRequest(`/projects/${id}`, {
-    method: "DELETE",
-  })
-}
-
-// Analytics/Logging API functions
-export interface AnalyticsEvent {
-  event: string
-  userId?: string
-  data?: any
-  timestamp?: string
-}
-
-export async function trackEvent(event: AnalyticsEvent) {
-  return apiRequest("/analytics/track", {
-    method: "POST",
-    body: JSON.stringify({
-      ...event,
-      timestamp: new Date().toISOString(),
-    }),
-  })
-}
-
-// Admin API functions (if user is admin)
-export async function getAdminStats() {
-  return apiRequest("/admin/stats")
-}
-
-export async function getAllUsers() {
-  return apiRequest("/admin/users")
-}
-
-export async function getAllProjects() {
-  return apiRequest("/admin/projects")
-}
-
-export async function updateUserRole(userId: string, role: "user" | "admin") {
-  return apiRequest(`/admin/users/${userId}/role`, {
-    method: "PUT",
-    body: JSON.stringify({ role }),
-  })
-}
-
-export async function updateUserStatus(userId: string, status: "active" | "inactive") {
-  return apiRequest(`/admin/users/${userId}/status`, {
-    method: "PUT",
-    body: JSON.stringify({ status }),
-  })
+  return response.success
 }

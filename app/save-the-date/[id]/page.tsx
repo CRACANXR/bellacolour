@@ -18,6 +18,17 @@ interface SaveTheDateData {
   view_count: number
 }
 
+// Example mock object
+const mock: SaveTheDateData = {
+  id: "1",
+  partner1_name: "A",
+  partner2_name: "B",
+  wedding_date: "2025-08-10",
+  created_at: "2025-07-01",
+  expires_at: "2025-08-11",
+  view_count: 0,
+};
+
 export default function SaveTheDatePersistentPage() {
   const router = useRouter()
   const params = useParams()
@@ -32,7 +43,16 @@ export default function SaveTheDatePersistentPage() {
         const result = await getProjectById(params.id as string)
 
         if (result.success && result.data && result.data.type === "save-the-date") {
-          setData(result.data as SaveTheDateData)
+          const d = result.data;
+          setData({
+            id: d.id,
+            partner1_name: d.partner1_name,
+            partner2_name: d.partner2_name,
+            wedding_date: d.wedding_date ?? "",
+            created_at: d.created_at ?? "",
+            expires_at: d.expires_at ?? "",
+            view_count: d.view_count ?? 0,
+          });
           await trackEvent({
             event: "save_the_date_link_viewed",
             data: { projectId: params.id },
