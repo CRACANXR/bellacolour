@@ -184,3 +184,15 @@ export const trackEvent = async (eventData: Omit<MockEvent, "id" | "timestamp">)
   }
   return response.success
 }
+
+export async function loginUser(credentials: { email: string; password: string }) {
+  // ...your login logic...
+}
+
+export async function registerUser(data: { email: string; password: string; name: string }) {
+  // ...your register logic...
+}
+
+export async function logoutUser() {
+  // ...your logout logic...
+}

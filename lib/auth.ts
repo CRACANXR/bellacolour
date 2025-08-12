@@ -1,3 +1,5 @@
+import type { AuthUser } from "@/contexts/auth-context"
+
 export interface User {
   id: string
   email: string
@@ -15,33 +17,35 @@ export interface AuthState {
 // Admin emails - in a real app, this would be in a database
 const ADMIN_EMAILS = ["admin@bellacolor.com", "admin@example.com", "test@admin.com"]
 
+// Mock user data
+const MOCK_USERS = [
+  { id: "user1", email: "user@bellacolor.com", name: "Demo User", role: "user", password: "test123" },
+  { id: "admin1", email: "admin@bellacolor.com", name: "Admin User", role: "admin", password: "test123" },
+  { id: "admin2", email: "test@admin.com", name: "Test Admin", role: "admin", password: "test123" },
+]
+
 // Generate a simple user ID
 function generateUserId(): string {
   return "user_" + Math.random().toString(36).substring(2, 15) + Date.now().toString(36)
 }
 
 // Get current user from localStorage
-export function getCurrentUser(): User | null {
+export function getCurrentUser(): AuthUser | null {
   if (typeof window === "undefined") return null
-
-  try {
-    const userData = localStorage.getItem("wedding_app_user")
-    return userData ? JSON.parse(userData) : null
-  } catch {
-    return null
-  }
+  const userJson = localStorage.getItem("currentUser")
+  return userJson ? JSON.parse(userJson) : null
 }
 
 // Save user to localStorage
-export function saveUser(user: User): void {
+export function saveUser(user: AuthUser): void {
   if (typeof window === "undefined") return
-  localStorage.setItem("wedding_app_user", JSON.stringify(user))
+  localStorage.setItem("currentUser", JSON.stringify(user))
 }
 
 // Remove user from localStorage
 export function removeUser(): void {
   if (typeof window === "undefined") return
-  localStorage.removeItem("wedding_app_user")
+  localStorage.removeItem("currentUser")
 }
 
 // Check if email is admin
@@ -49,31 +53,48 @@ export function isAdminEmail(email: string): boolean {
   return ADMIN_EMAILS.includes(email.toLowerCase())
 }
 
-// Login function (simplified - in real app would validate against backend)
-export function loginUser(email: string, password: string, name?: string): User | null {
-  // Simple validation
-  if (!email || !password) return null
+// Simulate API call for login
+export async function apiLogin(
+  email: string,
+  password: string,
+): Promise<{ success: boolean; user?: AuthUser; error?: string }> {
+  const foundUser = MOCK_USERS.find(
+    u => u.email.toLowerCase() === email.toLowerCase()
+  );
+  if (!foundUser) return { success: false, error: "Invalid credentials" };
 
-  // Check if user is admin
-  const isAdmin = isAdminEmail(email)
-
-  // In a real app, this would validate against a backend
-  const user: User = {
-    id: generateUserId(),
-    email: email.toLowerCase(),
-    name: name || (isAdmin ? "Admin User" : email.split("@")[0]),
-    role: isAdmin ? "admin" : "user",
-    createdAt: new Date().toISOString(),
-    lastLogin: new Date().toISOString(),
+  // Check per-user password
+  if (password !== foundUser.password) {
+    return { success: false, error: "Invalid credentials" };
   }
 
-  saveUser(user)
-  return user
+  // Remove password before returning user object
+  const { password: _, ...userWithoutPassword } = foundUser;
+
+  return { success: true, user: { ...userWithoutPassword, createdAt: new Date().toISOString() } };  
 }
 
-// Logout function
-export function logoutUser(): void {
-  removeUser()
+// Simulate API call for registration
+export async function apiRegister(
+  email: string,
+  password: string,
+  name: string,
+): Promise<{ success: boolean; user?: AuthUser; error?: string }> {
+  const response = await fetch("/api/register", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email, password, name }),
+  })
+  if (!response.ok) return null
+  return await response.json()
+}
+
+// Simulate API call for logout
+export async function apiLogout(): Promise<{ success: boolean }> {
+  const response = await fetch("/api/logout", {
+    method: "POST",
+  })
+  return response.ok
 }
 
 // Check if user is authenticated
@@ -87,7 +108,6 @@ export function isAdmin(): boolean {
   return user?.role === "admin"
 }
 
-// Mock data for admin panel
 export interface AdminStats {
   totalUsers: number
   totalProjects: number

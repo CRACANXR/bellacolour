@@ -1,6 +1,24 @@
 "use client"
 
 import { useState, useEffect } from "react"
+
+// Add TypeScript support for <model-viewer> custom element
+declare global {
+  namespace JSX {
+    interface IntrinsicElements {
+      'model-viewer': React.DetailedHTMLProps<React.HTMLAttributes<HTMLElement>, HTMLElement> & {
+        src?: string
+        alt?: string
+        ar?: boolean
+        'ar-modes'?: string
+        'camera-controls'?: boolean
+        'auto-rotate'?: boolean
+        style?: React.CSSProperties
+        exposure?: string | number
+      }
+    }
+  }
+}
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -343,83 +361,44 @@ export default function App() {
           </div>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 justify-center">
-          {/* AR Display Window 1 */}
           <div className="bg-gray-100 rounded-lg shadow-lg flex items-center justify-center p-4">
-            {isIOS ? (
-              <model-viewer
-                src="/ar-assets/AR-Code-Object-Capture-app-1735541303 2.usdz"
-                alt="kapaklı"
-                ar
-                ar-modes="quick-look"
-                camera-controls
-                auto-rotate
-                style={{ width: '100%', height: '350px', background: 'white', borderRadius: '0.5rem' }}
-                exposure="1"
-              ></model-viewer>
-            ) : (
-              <model-viewer
-                src="/ar-assets/kapaklı.glb"
-                alt="kapaklı"
-                ar
-                ar-modes="webxr scene-viewer"
-                camera-controls
-                auto-rotate
-                style={{ width: '100%', height: '350px', background: 'white', borderRadius: '0.5rem' }}
-                exposure="1"
-              ></model-viewer>
-            )}
+            <model-viewer
+              src="/ar-assets/kapakli.glb"
+              ios-src="/ar-assets/AR-Code-Object-Capture-app-1735541303 2.usdz"
+              alt="kapakli"
+              ar
+              ar-modes="webxr scene-viewer quick-look"
+              camera-controls
+              auto-rotate
+              style={{ width: '100%', height: '350px', background: 'white', borderRadius: '0.5rem' }}
+              exposure="1"
+            />
           </div>
-          {/* AR Display Window 2 */}
           <div className="bg-gray-100 rounded-lg shadow-lg flex items-center justify-center p-4">
-            {isIOS ? (
-              <model-viewer
-                src="/ar-assets/AR-Code-Object-Capture-app-1735827577.usdz"
-                alt="kapaklı2"
-                ar
-                ar-modes="quick-look"
-                camera-controls
-                auto-rotate
-                style={{ width: '100%', height: '350px', background: 'white', borderRadius: '0.5rem' }}
-                exposure="1"
-              ></model-viewer>
-            ) : (
-              <model-viewer
-                src="/ar-assets/kapaklı2.glb"
-                alt="kapaklı2"
-                ar
-                ar-modes="webxr scene-viewer"
-                camera-controls
-                auto-rotate
-                style={{ width: '100%', height: '350px', background: 'white', borderRadius: '0.5rem' }}
-                exposure="1"
-              ></model-viewer>
-            )}
+            <model-viewer
+              src="/ar-assets/kapakli2.glb"
+              ios-src="/ar-assets/AR-Code-Object-Capture-app-1735827577.usdz"
+              alt="kapakli2"
+              ar
+              ar-modes="webxr scene-viewer quick-look"
+              camera-controls
+              auto-rotate
+              style={{ width: '100%', height: '350px', background: 'white', borderRadius: '0.5rem' }}
+              exposure="1"
+            />
           </div>
-          {/* AR Display Window 3 */}
           <div className="bg-gray-100 rounded-lg shadow-lg flex items-center justify-center p-4">
-            {isIOS ? (
-              <model-viewer
-                src="/ar-assets/AR-Code-Object-Capture-app-1739970952.usdz"
-                alt="kapaklı3"
-                ar
-                ar-modes="quick-look"
-                camera-controls
-                auto-rotate
-                style={{ width: '100%', height: '350px', background: 'white', borderRadius: '0.5rem' }}
-                exposure="1"
-              ></model-viewer>
-            ) : (
-              <model-viewer
-                src="/ar-assets/kapaklı3.glb"
-                alt="kapaklı3"
-                ar
-                ar-modes="webxr scene-viewer"
-                camera-controls
-                auto-rotate
-                style={{ width: '100%', height: '350px', background: 'white', borderRadius: '0.5rem' }}
-                exposure="1"
-              ></model-viewer>
-            )}
+            <model-viewer
+              src="/ar-assets/kapakli3.glb"
+              ios-src="/ar-assets/AR-Code-Object-Capture-app-1739970952.usdz"
+              alt="kapakli3"
+              ar
+              ar-modes="webxr scene-viewer quick-look"
+              camera-controls
+              auto-rotate
+              style={{ width: '100%', height: '350px', background: 'white', borderRadius: '0.5rem' }}
+              exposure="1"
+            />
           </div>
         </div>
       </section>

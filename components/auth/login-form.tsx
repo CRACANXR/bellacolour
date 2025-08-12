@@ -56,7 +56,7 @@ export function LoginForm({ onSuccess, onSwitchToRegister }: LoginFormProps) {
 
   const handleAdminLogin = (adminEmail: string) => {
     setEmail(adminEmail)
-    setPassword("admin123")
+    setPassword("test123") // Any password works for mock admin accounts
   }
 
   return (

@@ -20,7 +20,7 @@ export default function RootLayout({
     <html lang="en">
       <head>
         <Script
-          src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"
+          src="https://unpkg.com/@google/model-viewer/dist/model-viewer-umd.js"
           strategy="beforeInteractive"
         />
       </head>
@@ -29,6 +29,17 @@ export default function RootLayout({
           {children}
           <Toaster />
         </AuthProvider>
+        <model-viewer
+          src="/ar-assets/kapaklı.glb"
+          ios-src="/ar-assets/AR-Code-Object-Capture-app-1735541303 2.usdz"
+          alt="kapaklı"
+          ar
+          ar-modes="webxr scene-viewer quick-look"
+          camera-controls
+          auto-rotate
+          style={{ width: '100%', height: '350px', background: 'white', borderRadius: '0.5rem' }}
+          exposure="1"
+        />
       </body>
     </html>
   )

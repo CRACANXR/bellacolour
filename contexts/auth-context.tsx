@@ -1,175 +1,108 @@
 "use client"
 
 import type React from "react"
-import { createContext, useContext, useEffect, useState } from "react"
-import { loginUser, registerUser, logoutUser, trackEvent, type LoginResponse } from "@/lib/api-service"
+import { createContext, useContext, useState, useEffect, useCallback } from "react"
+import { apiLogin, apiRegister, apiLogout, getCurrentUser } from "@/lib/auth";
+import { toast } from "@/components/ui/use-toast"
 
-export interface User {
+export interface AuthUser {
   id: string
   email: string
-  name: string
+  name?: string
   role: "user" | "admin"
-  createdAt?: string
-  lastLogin?: string
 }
 
 interface AuthContextType {
-  user: User | null
+  user: AuthUser | null
   isAuthenticated: boolean
   isLoading: boolean
   login: (email: string, password: string) => Promise<boolean>
   register: (email: string, password: string, name: string) => Promise<boolean>
   logout: () => void
-  updateUser: (userData: Partial<User>) => void
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<User | null>(null)
+  const [user, setUser] = useState<AuthUser | null>(null)
   const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
-    // Load user from localStorage on mount (for offline persistence)
-    const savedUser = localStorage.getItem("wedding_app_user")
-    if (savedUser) {
-      try {
-        const parsedUser = JSON.parse(savedUser)
-        setUser(parsedUser)
-      } catch (error) {
-        console.error("Error parsing saved user:", error)
-        localStorage.removeItem("wedding_app_user")
-      }
+    const storedUser = getCurrentUser()
+    if (storedUser) {
+      setUser(storedUser)
     }
     setIsLoading(false)
   }, [])
 
-  const login = async (email: string, password: string): Promise<boolean> => {
+  const login = useCallback(async (email: string, password: string) => {
+    setIsLoading(true)
     try {
-      const response: LoginResponse = await loginUser(email, password)
+      const response = await apiLogin(email, password)
 
-      const userData: User = {
+      if (!response || !response.user) {
+        toast({ title: "Login failed", description: "Invalid credentials.", variant: "destructive" })
+        setUser(null)
+        if (typeof window !== "undefined") localStorage.removeItem("user")
+        return false
+      }
+
+      const userData: AuthUser = {
         id: response.user.id,
         email: response.user.email,
         name: response.user.name,
         role: response.user.role,
-        lastLogin: new Date().toISOString(),
       }
 
       setUser(userData)
-      localStorage.setItem("wedding_app_user", JSON.stringify(userData))
-
-      // Track login event
-      try {
-        await trackEvent({
-          event: "user_login",
-          userId: userData.id,
-          data: { email: userData.email, role: userData.role },
-        })
-      } catch (trackError) {
-        console.warn("Failed to track login event:", trackError)
-      }
-
+      if (typeof window !== "undefined") localStorage.setItem("user", JSON.stringify(userData))
       return true
     } catch (error) {
-      console.error("Login error:", error)
-      return false
-    }
-  }
-
-  const register = async (email: string, password: string, name: string): Promise<boolean> => {
-    try {
-      const response: LoginResponse = await registerUser({ email, password, name })
-
-      const userData: User = {
-        id: response.user.id,
-        email: response.user.email,
-        name: response.user.name,
-        role: response.user.role,
-        createdAt: new Date().toISOString(),
-        lastLogin: new Date().toISOString(),
-      }
-
-      setUser(userData)
-      localStorage.setItem("wedding_app_user", JSON.stringify(userData))
-
-      // Track registration event
-      try {
-        await trackEvent({
-          event: "user_register",
-          userId: userData.id,
-          data: { email: userData.email, name: userData.name },
-        })
-      } catch (trackError) {
-        console.warn("Failed to track registration event:", trackError)
-      }
-
-      return true
-    } catch (error) {
-      console.error("Registration error:", error)
-      return false
-    }
-  }
-
-  const logout = async () => {
-    try {
-      if (user) {
-        // Track logout event
-        try {
-          await trackEvent({
-            event: "user_logout",
-            userId: user.id,
-          })
-        } catch (trackError) {
-          console.warn("Failed to track logout event:", trackError)
-        }
-
-        // Call backend logout
-        try {
-          await logoutUser()
-        } catch (logoutError) {
-          console.warn("Backend logout failed:", logoutError)
-        }
-      }
-    } catch (error) {
-      console.error("Logout error:", error)
-    } finally {
+      console.error("Login failed:", error)
       setUser(null)
-      localStorage.removeItem("wedding_app_user")
+      if (typeof window !== "undefined") localStorage.removeItem("user")
+      return false
+    } finally {
+      setIsLoading(false)
     }
-  }
+  }, [])
 
-  const updateUser = (userData: Partial<User>) => {
-    if (!user) return
+  const register = useCallback(async (email: string, password: string, name: string) => {
+    setIsLoading(true)
+    try {
+      const result = await apiRegister(email, password, name)
+      if (result.success && result.user) {
+        setUser(result.user)
+        return true
+      } else {
+        setUser(null)
+        return false
+      }
+    } catch (error) {
+      console.error("Registration failed:", error)
+      setUser(null)
+      return false
+    } finally {
+      setIsLoading(false)
+    }
+  }, [])
 
-    const updatedUser = { ...user, ...userData }
-    setUser(updatedUser)
-    localStorage.setItem("wedding_app_user", JSON.stringify(updatedUser))
-  }
+  const logout = useCallback(async () => {
+    setIsLoading(true)
+    try {
+      await apiLogout()
+      setUser(null)
+    } catch (error) {
+      console.error("Logout failed:", error)
+    } finally {
+      setIsLoading(false)
+    }
+  }, [])
 
-  if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-rose-600 mx-auto mb-4"></div>
-          <p>Yükleniyor...</p>
-        </div>
-      </div>
-    )
-  }
+  const isAuthenticated = !!user
 
   return (
-    <AuthContext.Provider
-      value={{
-        user,
-        isAuthenticated: !!user,
-        isLoading,
-        login,
-        register,
-        logout,
-        updateUser,
-      }}
-    >
+    <AuthContext.Provider value={{ user, isAuthenticated, isLoading, login, register, logout }}>
       {children}
     </AuthContext.Provider>
   )
