@@ -1,5 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server"
-import { getSaveTheDateLink, initDatabase } from "@/lib/database"
+// import { getSaveTheDateLink, initDatabase } from "@/lib/database"
 
 export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
   try {
