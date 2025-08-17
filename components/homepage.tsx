@@ -57,7 +57,7 @@ export default function Homepage({ onNavigateToEditor }: HomepageProps) {
       features: ["Uyumlu Tasarımlar", "Dijital Seçenekler", "Hızlı Teslimat"],
       price: "Adet 2,99₺'den başlayan fiyatlarla",
       color: "purple",
-      link: "/save-the-date",
+      link: "/save-the-date/countdown",
     },
     {
       title: "Etkinlik Kırtasiyesi",
@@ -131,7 +131,7 @@ export default function Homepage({ onNavigateToEditor }: HomepageProps) {
           <div className="flex items-center justify-between h-20">
             <div className="flex items-center space-x-8">
               <div className="flex items-center space-x-3">
-                <img src="/images/bella-color-logo.jpeg" alt="Bella Color" className="h-12 w-auto" />
+                <img src="/images/bella-color-logo.png" alt="Bella Color" className="h-12 w-auto" />
                 <div className="flex flex-col">
                   <span className="text-2xl font-serif text-gray-900 tracking-wide">Bella Color</span>
                   <span className="text-xs text-gray-500 tracking-widest uppercase">Lüks Davetiye</span>
@@ -157,7 +157,7 @@ export default function Homepage({ onNavigateToEditor }: HomepageProps) {
                       </div>
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
-                    <Link href="/save-the-date" passHref>
+                    <Link href="/save-the-date/countdown" passHref>
                       <DropdownMenuItem asChild className="cursor-pointer p-4">
                         <a>
                           <Crown className="mr-3 h-5 w-5 text-purple-500" />
@@ -390,15 +390,15 @@ export default function Homepage({ onNavigateToEditor }: HomepageProps) {
               <div className="space-y-6">
                 <div className="flex items-center">
                   <Phone className="h-6 w-6 text-rose-400 mr-4" />
-                  <span className="text-lg">(555) 123-BELLA</span>
+                  <span className="text-lg">(539) 477-2806</span>
                 </div>
                 <div className="flex items-center">
                   <Mail className="h-6 w-6 text-rose-400 mr-4" />
-                  <span className="text-lg">hello@bellacolor.com</span>
+                  <span className="text-lg">info@bellacolor.com</span>
                 </div>
                 <div className="flex items-center">
                   <MapPin className="h-6 w-6 text-rose-400 mr-4" />
-                  <span className="text-lg">Beverly Hills Design Studio</span>
+                  <span className="text-lg">Maltepe Mah. Gümüşsuyu Cad. Odin İş Merkezi 28/241 Zeytinburnu/İstanbul"</span>
                 </div>
                 <div className="flex items-center">
                   <Clock className="h-6 w-6 text-rose-400 mr-4" />
