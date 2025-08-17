@@ -362,17 +362,17 @@ export default function App() {
         </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 justify-center">
           <div className="bg-gray-100 rounded-lg shadow-lg flex items-center justify-center p-4">
-            <model-viewer
-              src="/ar-assets/kapakli.glb"
-              ios-src="/ar-assets/AR-Code-Object-Capture-app-1735541303 2.usdz"
-              alt="kapakli"
-              ar
-              ar-modes="webxr scene-viewer quick-look"
-              camera-controls
-              auto-rotate
-              style={{ width: '100%', height: '350px', background: 'white', borderRadius: '0.5rem' }}
-              exposure="1"
-            />
+              <model-viewer
+                src="/ar-assets/kapakli.glb"
+                ios-src="/kapakli"
+                alt="kapakli"
+                ar
+                ar-modes="webxr scene-viewer quick-look"
+                camera-controls
+                auto-rotate
+                style={{ width: '100%', height: '350px', background: 'white', borderRadius: '0.5rem' }}
+                exposure="1"
+              />
           </div>
           <div className="bg-gray-100 rounded-lg shadow-lg flex items-center justify-center p-4">
             <model-viewer

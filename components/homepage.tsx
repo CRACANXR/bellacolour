@@ -335,7 +335,7 @@ export default function Homepage({ onNavigateToEditor }: HomepageProps) {
                       variant="outline"
                       asChild
                     >
-                      <a>{service.title === "Save the Date Kartları" ? "Aracı Kullan" : "Koleksiyonu İncele"}</a>
+                      {service.title === "Save the Date Kartları" ? "Aracı Kullan" : "Koleksiyonu İncele"}
                     </Button>
                   </Link>
                 </CardContent>
